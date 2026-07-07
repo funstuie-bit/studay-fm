@@ -1,0 +1,107 @@
+# Studay FM, the one-command demo.
+#
+#   cp .env.example .env      # then edit the passwords
+#   docker compose up --build
+#
+# Then open http://localhost:8080  (the stream itself is http://localhost:8000/radio.mp3)
+#
+# Services on one box, mirroring the real architecture:
+#   icecast  - the public streaming server (the mount listeners connect to)
+#   playout  - Liquidsoap: reads the seed library, plays it gapless + normalised,
+#              weaves in DJ breaks, and publishes one continuous MP3 to Icecast
+#   web      - a tiny static site with a play button and live now-playing
+#   tts      - the demo's built-in voice (espeak); swap for Chatterbox
+#   dj       - writes DJ breaks, voices them via tts, stocks the talk pool
+#
+# It runs with no GPU, no LLM and no accounts (canned lines + robotic espeak
+# voice). To make it yours: seed/music/ for tracks, config.yaml for the station,
+# and point services.llm + services.tts at your own LLM + Chatterbox. See SETUP.md.
+
+name: studayfm-demo
+
+services:
+  icecast:
+    build: ./stack/icecast
+    environment:
+      ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD:?set ICECAST_SOURCE_PASSWORD in .env}
+      ICECAST_ADMIN_PASSWORD: ${ICECAST_ADMIN_PASSWORD:?set ICECAST_ADMIN_PASSWORD in .env}
+    ports:
+      - "${ICECAST_PORT:-8000}:8000"
+    restart: unless-stopped
+
+  playout:
+    build: ./stack/playout
+    depends_on:
+      icecast:
+        condition: service_started
+      dj:
+        condition: service_started
+    environment:
+      ICECAST_HOST: icecast
+      ICECAST_SOURCE_PASSWORD: ${ICECAST_SOURCE_PASSWORD:?set ICECAST_SOURCE_PASSWORD in .env}
+    volumes:
+      - ./config.yaml:/config.yaml:ro
+      - ./seed/music:/music:ro
+      - talk:/talk:ro
+      - shared:/shared
+    restart: unless-stopped
+
+  web:
+    image: caddy:2-alpine
+    depends_on:
+      - playout
+    volumes:
+      - ./stack/web/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./stack/web/site:/srv/site:ro
+      - shared:/srv/live:ro
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    restart: unless-stopped
+
+  # The demo's built-in voice. Robotic espeak, no GPU. Replace with Chatterbox
+  # (same POST /tts contract) for cloned voices.
+  tts:
+    build: ./stack/tts
+    restart: unless-stopped
+
+  # Writes the DJ breaks and voices them via tts, stocking the talk pool. Exits
+  # after one pass by default (talk.refresh_minutes: 0); set it >0 to keep
+  # re-stocking. Drop a reference clip in ./voices and set services.tts.voice_ref.
+  dj:
+    build: ./stack/dj
+    depends_on:
+      tts:
+        condition: service_started
+    environment:
+      LLM_API_KEY: ${LLM_API_KEY:-}
+    volumes:
+      - ./config.yaml:/config.yaml:ro
+      - ./voices:/voices:ro
+      - talk:/talk
+    restart: on-failure
+
+  # Once the site is actually serving, print a clear "open your browser" banner so
+  # you are not left watching the logs wondering where to look. Waits for the web
+  # service, prints the URL, then idles.
+  hint:
+    image: busybox
+    depends_on:
+      - web
+    command:
+      - sh
+      - -c
+      - |
+        until wget -qO- http://web:80/ >/dev/null 2>&1; do sleep 2; done
+        echo
+        echo "=================================================================="
+        echo "  Studay FM demo is up."
+        echo "  Open  http://localhost:${WEB_PORT:-8080}  in your browser."
+        echo "  (the raw stream is http://localhost:${ICECAST_PORT:-8000}/radio.mp3)"
+        echo "=================================================================="
+        echo
+        exec sleep infinity
+    restart: unless-stopped
+
+volumes:
+  shared:
+  talk:

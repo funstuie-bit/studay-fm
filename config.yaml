@@ -1,0 +1,61 @@
+# Studay FM demo configuration.
+#
+# This is the one file you edit to make the station yours. The demo reads the
+# `station` block and plays seed/music/ as a continuous flow, and (if `talk` is
+# enabled) weaves in hosted DJ breaks written and voiced by the `services` below.
+
+station:
+  name: "Demo FM"
+  tagline: "A tiny AI-radio demo. Swap the seed tracks for your own."
+  mount: "radio.mp3"     # the Icecast mount; the stream is /<mount>
+  stream_port: 8000      # the port the browser reaches Icecast on (match ICECAST_PORT)
+  bitrate: 128           # MP3 kbps
+  crossfade: 2.0         # seconds of overlap between tracks
+
+# Shows define who is on air and how they talk. Each show's host, name and tone
+# become the persona the DJ breaks are written in. (The music-only flow ignores
+# hours/styles; those are here for the fuller scheduled build.)
+shows:
+  - id: morning
+    name: "First Light"
+    host: "The Early Riser"
+    hours: "06:00-10:00"
+    styles: ["warm ambient", "morning jazz"]
+    tone: "unhurried, warm, welcoming; likes mornings and quiet starts"
+  - id: evening
+    name: "The Long Way Home"
+    host: "The Night Driver"
+    hours: "18:00-22:00"
+    styles: ["downtempo", "lo-fi"]
+    tone: "reflective, calm, a little wistful; late-night company"
+
+# Hosted DJ talk. With this on, the `dj` service stocks a pool of short spoken
+# breaks per show and Liquidsoap drops one in every few songs. Turn it off for a
+# pure music flow.
+talk:
+  enabled: true
+  every: 4                # insert a break roughly every N songs
+  lines_per_show: 6       # how many breaks to stock per show per pass
+  refresh_minutes: 0      # 0 = stock once at startup; >0 = re-stock on that interval
+
+# The two services that make the talk. Both have working built-in defaults so the
+# demo runs with no accounts, then you swap in the real thing.
+services:
+  # TEXT: writes each DJ break. Any OpenAI-compatible chat endpoint works. Leave
+  # base_url empty to use the built-in canned lines (so talk works with no LLM).
+  llm:
+    base_url: ""          # e.g. http://your-llm:11434/v1  (Ollama, vLLM, hosted, ...)
+    api_key: ""           # if your endpoint needs one (also via LLM_API_KEY in .env)
+    model: ""             # e.g. llama3.1, deepseek-chat, ...
+
+  # VOICE: turns each line into speech. The demo ships a basic espeak server
+  # (robotic, no GPU). Point this at your own Chatterbox (or any server speaking
+  # the same contract, POST /tts {text, voice_ref} -> wav) for cloned voices, and
+  # set voice_ref to your reference clip mounted into the dj service.
+  tts:
+    url: "http://tts:5002"
+    voice_ref: ""         # e.g. /voices/my_host.wav  (ignored by the espeak default)
+
+  # MUSIC generation (not used by the demo, which plays seed/music/). Point at
+  # your own ACE-Step instance for fresh tracks. See SETUP.md.
+  ace_step: ""            # e.g. http://your-music-box:4009

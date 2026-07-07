@@ -1,0 +1,16 @@
+# Serves the demo site, plus the live station.json / now.json that Liquidsoap
+# writes into the shared volume (mounted here read-only at /srv/live).
+:80 {
+	encode gzip
+
+	handle_path /live/* {
+		root * /srv/live
+		header Cache-Control "no-store"
+		file_server
+	}
+
+	handle {
+		root * /srv/site
+		file_server
+	}
+}

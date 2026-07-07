@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studay FM demo</title>
+<style>
+  :root { --ink:#18130D; --paper:#F1E7D2; --accent:#F5B500; --muted:#9A8C70; }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; }
+  body {
+    min-height:100vh;
+    background: radial-gradient(120% 120% at 50% 0%, #2a2318 0%, #18130D 60%);
+    color: var(--paper);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    padding:44px 22px;
+    overflow-x:hidden;
+  }
+  .card { max-width:520px; margin:0 auto; text-align:center; overflow-wrap:anywhere; }
+  .kicker { font-size:12px; letter-spacing:.28em; text-transform:uppercase; color:var(--accent); margin-bottom:18px; }
+  h1 { font-size:clamp(40px,10vw,76px); line-height:.9; letter-spacing:-.02em; margin:0; font-weight:800; }
+  .tagline { color:#C9BCA3; font-size:15px; margin:16px auto 34px; max-width:420px; line-height:1.5; }
+  .disc {
+    width:190px; height:190px; margin:0 auto 30px; border-radius:50%;
+    background: repeating-radial-gradient(circle at 50% 50%, #0b0b0b 0 3px, #1b1b1b 3px 5px);
+    display:flex; align-items:center; justify-content:center; position:relative;
+    box-shadow: 0 0 0 3px #2C2419, 0 12px 30px rgba(0,0,0,.5);
+  }
+  .disc.spin { animation: spin 4s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .label { width:74px; height:74px; border-radius:50%; background:var(--accent); color:var(--ink);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:30px; }
+  .play {
+    cursor:pointer; border:3px solid var(--ink); background:var(--accent); color:var(--ink);
+    font-family:inherit; font-weight:700; font-size:15px; letter-spacing:.08em; text-transform:uppercase;
+    padding:15px 30px; border-radius:10px; box-shadow:5px 5px 0 var(--paper); transition:transform .05s;
+  }
+  .play:active { transform: translate(3px,3px); box-shadow:2px 2px 0 var(--paper); }
+  .now { margin-top:30px; min-height:48px; }
+  .now .state { font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); }
+  .now .track { font-size:20px; font-weight:800; margin-top:6px; }
+  .now .artist { font-size:13px; color:var(--muted); margin-top:3px; }
+  footer { margin-top:40px; font-size:11px; letter-spacing:.06em; color:var(--muted); line-height:1.7; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <div class="kicker">Live &middot; AI radio demo</div>
+    <h1 id="name">Demo FM</h1>
+    <p class="tagline" id="tagline">Starting up...</p>
+
+    <div class="disc" id="disc">
+      <div class="label" id="label">D</div>
+    </div>
+
+    <button class="play" id="play">&#9654;&nbsp; Play</button>
+
+    <div class="now">
+      <div class="state" id="state">Tuning in</div>
+      <div class="track" id="track">&middot;</div>
+      <div class="artist" id="artist"></div>
+    </div>
+
+    <footer>
+      Every track here is a placeholder. Swap <code>seed/music/</code> for your own,
+      or point the stack at an ACE-Step instance.<br>
+      Built on the Studay FM stack. Stream: <span id="streamurl">http://localhost:8000/radio.mp3</span>
+    </footer>
+  </div>
+
+  <audio id="audio" crossorigin="anonymous"></audio>
+
+<script>
+(function () {
+  var audio = document.getElementById('audio');
+  var playBtn = document.getElementById('play');
+  var disc = document.getElementById('disc');
+  var streamUrl = 'http://' + location.hostname + ':8000/radio.mp3';
+  var playing = false;
+
+  // Load station details from config (via bootstrap.py -> station.json).
+  fetch('/live/station.json', { cache: 'no-store' }).then(function (r) {
+    return r.ok ? r.json() : null;
+  }).then(function (s) {
+    if (!s) return;
+    if (s.name) { document.getElementById('name').textContent = s.name; document.title = s.name + ' demo'; }
+    if (s.name) { document.getElementById('label').textContent = s.name.trim().charAt(0).toUpperCase() || 'D'; }
+    document.getElementById('tagline').textContent = s.tagline || '';
+    var port = s.streamPort || 8000;
+    var mount = s.mount || 'radio.mp3';
+    streamUrl = 'http://' + location.hostname + ':' + port + '/' + mount;
+    document.getElementById('streamurl').textContent = streamUrl;
+  }).catch(function () {});
+
+  function setPlaying(on) {
+    playing = on;
+    playBtn.innerHTML = on ? '&#10073;&#10073;&nbsp; Pause' : '&#9654;&nbsp; Play';
+    document.getElementById('state').textContent = on ? 'On air' : 'Paused';
+    disc.classList.toggle('spin', on);
+  }
+
+  playBtn.addEventListener('click', function () {
+    if (playing) {
+      // Detach so we always reconnect at the live edge next time.
+      try { audio.pause(); audio.removeAttribute('src'); audio.load(); } catch (e) {}
+      setPlaying(false);
+    } else {
+      audio.src = streamUrl + '?t=' + Date.now();
+      var p = audio.play();
+      if (p && p.catch) p.catch(function () { setPlaying(false); document.getElementById('state').textContent = 'Could not connect'; });
+      setPlaying(true);
+    }
+  });
+  audio.addEventListener('ended', function () { setPlaying(false); });
+  audio.addEventListener('error', function () { if (playing) { setPlaying(false); document.getElementById('state').textContent = 'Stream offline'; } });
+
+  // Poll now-playing.
+  function poll() {
+    fetch('/live/now.json', { cache: 'no-store' }).then(function (r) {
+      return r.ok ? r.json() : null;
+    }).then(function (n) {
+      if (!n) return;
+      document.getElementById('track').textContent = n.title || '·';
+      document.getElementById('artist').textContent = n.artist || '';
+    }).catch(function () {});
+  }
+  poll();
+  setInterval(poll, 5000);
+})();
+</script>
+</body>
+</html>

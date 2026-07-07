@@ -1,0 +1,6 @@
+.DS_Store
+
+# Local secrets and runtime, never commit these.
+.env
+**/__pycache__/
+*.pyc
