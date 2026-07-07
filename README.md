@@ -1,4 +1,4 @@
-# Studay FM
+# Studay FM (the name is a play on Today FM) 
 
 **A fully autonomous 24/7 AI radio network.**
 
