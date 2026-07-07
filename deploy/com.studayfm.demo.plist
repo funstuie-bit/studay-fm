@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- launchd agent for an always-on Studay FM stream host (macOS).
+     The installer (deploy/install.sh with the service flag) fills in __ROOT__
+     and loads this. Note: Docker (Docker Desktop or OrbStack) must be running
+     for it to work; on a headless Mac server, enable Docker to start at login.
+     On Linux, prefer the systemd unit. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.studayfm.demo</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/sh</string>
+    <string>-c</string>
+    <string>cd __ROOT__ &amp;&amp; exec docker compose up</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:__HOME__/.orbstack/bin</string>
+  </dict>
+
+  <key>WorkingDirectory</key>
+  <string>__ROOT__</string>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>__ROOT__/deploy/studayfm-demo.out.log</string>
+  <key>StandardErrorPath</key>
+  <string>__ROOT__/deploy/studayfm-demo.err.log</string>
+</dict>
+</plist>

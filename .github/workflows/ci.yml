@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  push:
+    branches: [main, stack]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  scrub:
+    # Fail fast if anything private or off-style lands in the public tree.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Scrub for private markers and em dashes
+        run: bash scripts/scrub.sh
+
+  demo:
+    # Boot the one-command demo on a clean machine and prove it streams.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare env
+        run: cp .env.example .env
+
+      - name: Build and start the stack
+        run: docker compose up -d --build
+
+      - name: Wait for the source to connect (up to 3 min)
+        run: |
+          for i in $(seq 1 90); do
+            if curl -sf http://localhost:8000/status-json.xsl | grep -q "radio.mp3"; then
+              echo "source connected"; exit 0
+            fi
+            sleep 2
+          done
+          echo "source never connected"; docker compose logs; exit 1
+
+      - name: Check the site serves
+        run: curl -fsS -o /dev/null http://localhost:8080/
+
+      - name: Check now-playing has a track
+        run: |
+          curl -fsS http://localhost:8080/live/now.json
+          curl -fsS http://localhost:8080/live/now.json | grep -q '"title"'
+
+      - name: Pull audio off the mount and check it is non-trivial
+        run: |
+          curl -s --max-time 6 http://localhost:8000/radio.mp3 -o stream.bin || true
+          bytes=$(wc -c < stream.bin)
+          echo "pulled $bytes bytes"
+          test "$bytes" -gt 20000
+
+      - name: Check the DJ stocked some talk
+        run: docker compose logs dj | grep -q "breaks stocked"
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v

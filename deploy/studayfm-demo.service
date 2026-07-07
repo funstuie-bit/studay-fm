@@ -1,0 +1,21 @@
+# systemd unit for an always-on Studay FM stream host (Linux).
+# deploy/install.sh --service fills in __ROOT__ and __DC__ and installs this.
+# To do it by hand: replace the placeholders, copy to
+# /etc/systemd/system/studayfm-demo.service, then:
+#   sudo systemctl daemon-reload && sudo systemctl enable --now studayfm-demo
+[Unit]
+Description=Studay FM demo (Docker Compose stream host)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=__ROOT__
+ExecStart=__DC__ up
+ExecStop=__DC__ down
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
