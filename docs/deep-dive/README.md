@@ -14,6 +14,10 @@ whole thing, see the [demo quickstart](../../README.md#run-your-own).
 | [Music generation](music.md) | Text-to-music: the locked recipe, positive-only captions, the single-flight lock, the quality gate, per-show lanes, and the "backfill, do not wipe" rule. |
 | [The newsreader](newsreader.md) | The hourly music-and-culture bulletin: feeds, dedupe and rotation, the LLM write, the track-sensitive fallback that airs it, and the render-once fan-out across stations. |
 | [The station engine](station-engine.md) | The scheduler and playout: the clock, the three simultaneous track-selection rules, schedule validation, one continuous normalized MP3, and truthful now-playing. |
+| [The site](site.md) | The single-page app: a small template framework over React, hash routing, a persistent player, the truthful now-playing card, and the JSON feeds it reads. |
+| [Continuity and the diary](continuity.md) | The non-DJ continuity voice: hour-boundary idents, the flow-station between-track weave, and the LLM-written public diary grounded in real state. |
+| [Public access and serving](serving.md) | Reaching it from the internet: an outbound-only tunnel, one hostname path-routed to the site and each mount, the one-connector law, and edge caching. |
+| [Reliability](reliability.md) | Staying up: the health watchdog and its checks, transition-only alerting, the always-on service model, and the hard-won lessons behind them. |
 
 A few principles run through all of them:
 
