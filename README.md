@@ -83,7 +83,7 @@ Three "compute-heavy jobs" jobs, **compose** the music, **voice** the DJs, and *
 
 The **operator** is what makes it feel like a station rather than a shuffle. It builds a schedule on a fixed clock, picks each track from the right show's music lane (never repeating a song too soon, never stacking two of the same style, never letting one show's genre bleed into another), drops the DJ in at the right cadence, and lets special shows take over their slots on the right days. A separate **maintenance loop** keeps the talk pools stocked so no host ever goes silent. Every word the DJs say, and the news, is written by an LLM in the host's voice.
 
-The LLM layer is **provider-agnostic**: it speaks the plain OpenAI-compatible chat API, so the same setup runs on a local model or a hosted one by changing a base URL. More detail in **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**; the build steps are in **[SETUP.md](SETUP.md)**.
+The LLM layer is **provider-agnostic**: it speaks the plain OpenAI-compatible chat API, so the same setup runs on a local model or a hosted one by changing a base URL. More detail in **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**; the build steps are in **[SETUP.md](SETUP.md)**. For subsystem-by-subsystem technical write-ups (voices, DJ scripts, music generation, the newsreader, the scheduler), see the **[deep dives](docs/deep-dive/)**.
 
 ## The stack
 
