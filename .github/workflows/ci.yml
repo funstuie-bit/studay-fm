@@ -42,8 +42,13 @@ jobs:
 
       - name: Check now-playing has a track
         run: |
-          curl -fsS http://localhost:8080/live/now.json
-          curl -fsS http://localhost:8080/live/now.json | grep -q '"title"'
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8080/live/now.json 2>/dev/null | grep -q '"title"'; then
+              echo "now-playing OK:"; curl -fsS http://localhost:8080/live/now.json; exit 0
+            fi
+            sleep 2
+          done
+          echo "now.json never published a title"; docker compose logs playout | tail -40; exit 1
 
       - name: Pull audio off the mount and check it is non-trivial
         run: |
