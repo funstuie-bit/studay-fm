@@ -2,13 +2,15 @@
 
 Written scripts are not what airs. Between a script and the stream sits a pipeline
 that renders it to audio, quality-gates it, promotes it to `approved`, and keeps
-each host's pool deep enough that no one ever runs out of things to say. A small
-self-healing maintenance loop drives the whole thing on a schedule.
+each host's pool both **deep** enough that no one ever runs out of things to say and
+**fresh** enough that a daily listener is not stuck with the same handful of breaks.
+Two loops drive it: an hourly floor-keeper and a daily freshness pass.
 
 ```
 scripts (candidate) ─► render (one-shot, on a GPU box) ─► QA + approve ─► approved pool ─► playout
-        ▲                                                                      │
-        └──────────────  maintenance loop: hourly, restock any thin pool  ◄────┘
+        ▲                                                                     │ │
+        ├──────────  hourly floor-keeper: restock any thin pool  ◄────────────┘ │
+        └──────────  daily freshness pass: add new, retire oldest  ◄────────────┘
 ```
 
 The word-writing is covered in [DJ scripts](dj-scripts.md), the voice render and
@@ -78,7 +80,38 @@ rationale is concrete: the scheduler enforces a multi-hour talk no-repeat, so a
 short show with a thin pool cannot reuse a break and the host goes silent in the
 back half of the show.
 
-## 5. The guardrails: one tool, a hard denylist
+## 5. Freshness, not just depth
+
+Keeping a pool above its floor prevents **silence**, but not **staleness**. A pool
+can sit comfortably above the floor while every clip in it is weeks old, so a daily
+listener hears the same few breaks on repeat. Depth and freshness are different
+properties, and a floor-keeper only guarantees the first: once every pool is stocked,
+it has nothing to do and no new talk is ever written.
+
+So a second, separate loop runs on a **daily schedule** and, per host, does two things
+independent of the floor:
+
+- **Adds a few fresh clips.** It writes a small number of new scripts and takes them
+  through the same render -> QA -> approve pipeline above, so every host gains new
+  material every day, whether or not its pool is thin.
+- **Retires the oldest.** Once a host's approved pool is over a **cap** (set well above
+  the floor), the oldest clips are retired, newest-kept-first, so the pool stays bounded
+  and its median age keeps falling instead of growing forever.
+
+**Retiring is a status flip, not a delete.** Because the scheduler selects strictly on
+`approved`, moving a clip from `approved` to a `retired` status drops it from air at the
+next rebuild while leaving the file on disk, recoverable and inspectable. And retirement
+is **schedule-aware**: a clip still referenced by the currently-live schedule is never
+retired, because its file must survive until the schedule next rebuilds, or the stream
+would hit a missing file mid-air. Anything still on today's schedule is left for a later
+pass.
+
+This loop is deliberately kept separate from the floor-keeper (section 4). The
+floor-keeper is a safety net against running out; the freshness pass is what keeps the
+station feeling alive day to day. Both are read-only toward the stream, and both go
+through the same approved-only gate.
+
+## 6. The guardrails: one tool, a hard denylist
 
 The maintenance agent is a small ReAct-style loop on the same provider-agnostic
 OpenAI-compatible layer as everything else (bounded: about `40` tool rounds, a
@@ -104,13 +137,13 @@ push, change config, spend money, or take any irreversible action without a huma
 The net design property: an autonomous hourly pass can top up talk but can never
 take the station down or spend money.
 
-## 6. Observability and failure modes
+## 7. Observability and failure modes
 
 Every pass logs its start, finish, and a heartbeat; the full agent transcript is
 appended to a per-day session log; each pipeline stage prints per-item results and
-a summary.
+a summary. The freshness pass stamps its own heartbeat file on every run.
 
-The two ways this silently fails, and the watchdog checks that catch them:
+The three ways this silently fails, and the watchdog checks that catch them:
 
 - **The maintenance loop stops running -> pools drain silently.** A watchdog check
   reads the service state and alerts if the loop is not running ("pools will
@@ -119,7 +152,14 @@ The two ways this silently fails, and the watchdog checks that catch them:
 - **A pool goes thin -> the host goes silent late in a show.** A second watchdog
   check independently recounts approved clips per show against the same floor and
   alerts on any thin pool.
+- **The pools stay full but stop refreshing -> the station sounds stale.** Depth
+  checks stay green while the newest clip quietly ages, so a third check measures the
+  **age of each host's newest approved clip** and flags any host with nothing new in a
+  day or two, and a **generator heartbeat** check flags if the daily freshness pass has
+  not run. This is the lesson that depth is not freshness, learned the direct way: every
+  pool read healthy while its newest clip was days old.
 
 The watchdog runs every 15 minutes, alerts only on state transitions (new problem
-or resolved), and can push transitions to a chat webhook. These are the same
-numbers the maintenance brief reads, giving two independent detectors of a drain.
+or resolved), and can push transitions to a chat webhook. Depth, freshness, and the
+generator heartbeat are independent detectors, so a stall shows up whether the loop
+dies, a pool drains, or generation simply stops producing anything new.

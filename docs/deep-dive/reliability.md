@@ -30,8 +30,11 @@ incident, this is failure-driven monitoring, not a generic template.
   hours, and no render/QA errors in the last runs.
 - **Generation queue**: the dead-letter directory is empty (a dead-lettered job is one
   that exhausted its retries).
-- **Talk stocking**: the stocking daemon is running, and each show's approved talk pool
-  is at or above the floor (`>= 15`), see [the talk pipeline](talk-pipeline.md).
+- **Talk stocking and freshness**: the stocking loop is running, and each show's approved
+  talk pool is at or above the floor (`>= 15`). Because depth is not freshness, two further
+  checks measure the **age of each show's newest approved clip** (red if a show has had
+  nothing new in a day or two) and the **freshness generator's heartbeat** (red if the
+  daily refresh has not run). See [the talk pipeline](talk-pipeline.md).
 - **Host**: root filesystem usage is `< 90%`.
 
 ### Alerting
@@ -104,6 +107,14 @@ Each of these is a rule with a reason:
 - **Restart supervised services cleanly.** A config change needs a clean stop and start
   with a gap, not a racing reload, and renames must be boundary-aware (a careless global
   substitution once corrupted source and caused an outage).
+- **Measure the work, not a threshold.** A check that a pool is above a floor, or a state
+  file is under an age limit, stays green as long as the number is in range, even when the
+  process that should be *doing the work* has quietly stopped. Two faults hid exactly this
+  way: talk pools sat above their floor while every clip was days old, and a now-playing
+  state file stayed under its staleness limit while skipping whole tracks. The fix is to
+  monitor freshness and last-ran heartbeats (is new work actually appearing?), not just
+  standing levels. A green dashboard should mean the work is happening, not merely that a
+  level is in bounds.
 
 Together these are what turn a pile of models into something that is actually on the air
 at four in the morning.
