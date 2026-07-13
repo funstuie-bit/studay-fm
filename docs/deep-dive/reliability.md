@@ -35,6 +35,12 @@ incident, this is failure-driven monitoring, not a generic template.
   checks measure the **age of each show's newest approved clip** (red if a show has had
   nothing new in a day or two) and the **freshness generator's heartbeat** (red if the
   daily refresh has not run). See [the talk pipeline](talk-pipeline.md).
+- **Music freshness (continuous stations)**: the same depth-and-freshness idea applied to
+  the self-refreshing music pools, each pool must be at or above a depth floor **and**
+  have a track newer than a set age, so a station whose daily music refresh has quietly
+  stopped goes red instead of looping a stale library while its floor still reads green.
+  One aired dir that plays a raw folder is watched directly rather than through its
+  generator, because a fresh generator is no proof the stream is hearing it.
 - **Host**: root filesystem usage is `< 90%`.
 
 ### Alerting

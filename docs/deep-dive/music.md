@@ -140,8 +140,15 @@ wipe a lane wholesale. This is enforced structurally:
   regeneration run never reduces the live inventory.
 - The QA gate quarantines rejects rather than deleting in place.
 
-Music generation is deliberately manual and non-autonomous: the scheduler only
-selects, libraries grow only when a generator is run on purpose.
+The flagship's main-show library grows only when a generator is run on purpose:
+the scheduler selects, it does not create. The **continuous sister stations are
+autonomous**: each runs a small daily self-refresh that tops up every lane with a
+few fresh tracks on the locked recipe, approves them, and **rotates the oldest
+beyond a per-lane cap into a retired folder** (recoverable, and kept outside the
+watched playlist dir so it can never air again). The pools stay fresh and bounded
+without hand-feeding, and a freshness check watches each one so a station that has
+quietly stopped generating goes red rather than looping a stale library (see
+[reliability](reliability.md)).
 
 ## 10. Output
 

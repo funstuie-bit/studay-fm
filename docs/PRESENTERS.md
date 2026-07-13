@@ -56,7 +56,7 @@ At the weekend a different cast takes over the daytime. The weekday hosts step a
 
 **The Dust Jacket** plays Saturday like a great record collection heard in sequence: album sides over singles, the b-side that outshone the a-side, and the liner-note detail that changes how you hear it. Erudite and dry, never a lecturer.
 
-**The Resident** brings the golden hour: soul, boogie, disco, funk and rare groove from a selector who used to work the clubs and kept the glamour without the four-in-the-morning finish.
+**The Resident** brings the golden hour: vocal-led soul and R&B, from classic and modern soul through quiet storm and neo-soul with a little boogie for the floor, from a selector who used to work the clubs and kept the glamour without the four-in-the-morning finish.
 
 **The Neighbour** runs the weekend nights. Saturday is After Hours, the kitchen party with the good speakers on, house and nu-disco into the small hours. Sunday is Sunday Service, mellow soul and downtempo that readies you for Monday without a trace of dread.
 

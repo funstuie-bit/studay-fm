@@ -98,13 +98,16 @@ independent of the floor:
   the floor), the oldest clips are retired, newest-kept-first, so the pool stays bounded
   and its median age keeps falling instead of growing forever.
 
-**Retiring is a status flip, not a delete.** Because the scheduler selects strictly on
-`approved`, moving a clip from `approved` to a `retired` status drops it from air at the
-next rebuild while leaving the file on disk, recoverable and inspectable. And retirement
-is **schedule-aware**: a clip still referenced by the currently-live schedule is never
-retired, because its file must survive until the schedule next rebuilds, or the stream
-would hit a missing file mid-air. Anything still on today's schedule is left for a later
-pass.
+**Retiring is a move, not a delete.** A retired clip's files are moved out of the host's
+pool into a retired folder: recoverable and inspectable, but gone from air. Physically
+moving it (rather than only flipping its sidecar to `retired`) matters because consumers
+differ: the flagship scheduler selects strictly on `approved` and would honour a status
+flip, but a sister station can air a host's folder as a **raw watched playlist** that
+plays every file in it regardless of sidecar, so only removing the file drops it from air
+for both. Retirement is **schedule-aware**: a clip still referenced by the currently-live
+schedule is never moved, because its file must survive until the schedule next rebuilds or
+the stream would hit a missing file mid-air. Anything still on today's schedule is left for
+a later pass.
 
 This loop is deliberately kept separate from the floor-keeper (section 4). The
 floor-keeper is a safety net against running out; the freshness pass is what keeps the

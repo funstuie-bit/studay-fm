@@ -53,9 +53,14 @@ reads existing lines and only renders what is missing.
 ## 4. The flow-station continuity host
 
 The genre-free flow stations carry a **sparser** continuity voice woven between tracks
-rather than a scheduled ident. Its lines are a small bank of short, station-safe
-sentences bucketed by kind (`ident`, `eclectic`, `moment`), each rendered and QA'd the
-same way. They are woven in with a weighted rotation over an empty-safe fallback:
+rather than a scheduled ident. Its lines are short, station-safe sentences bucketed by
+kind (`ident`, `eclectic`, `moment`), each rendered and QA'd the same way. Rather than a
+fixed bank, they are **refreshed daily**: a scheduled pass writes new lines in the
+continuity voice with the LLM, renders and approves them, and rotates the oldest beyond a
+cap into a retired folder, with a freshness check watching the pool. (An early build
+shipped a static bank and looped the same handful of lines for days before this was added,
+the same depth-is-not-freshness lesson as the talk pools.) They are woven in with a
+weighted rotation over an empty-safe fallback:
 
 ```
 continuity = fallback(track_sensitive=true, [ playlist(watch, continuity_dir), music ])
