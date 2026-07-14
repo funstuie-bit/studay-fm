@@ -3,8 +3,8 @@
 Technical write-ups of how the network is actually built, subsystem by subsystem.
 These describe the process and the practical technique (real parameters, recipes,
 and the lessons behind them), not any one private deployment. For the high-level
-shape first, read [ARCHITECTURE](../ARCHITECTURE.md); to run a small version of the
-whole thing, see the [demo quickstart](../../README.md#run-your-own).
+shape first, read [ARCHITECTURE](ARCHITECTURE.md); to run a small version of the
+whole thing, see the [demo quickstart](../README.md#run-your-own).
 
 | Page | What it covers |
 |---|---|

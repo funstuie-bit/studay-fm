@@ -52,4 +52,4 @@ A 24/7 broadcast is mostly the unglamorous reliability work:
 
 ---
 
-*This document is a high-level overview. For a step-by-step build guide, see [SETUP.md](../SETUP.md). For subsystem-by-subsystem technical write-ups (voices, DJ scripts, the talk pipeline, music generation, the newsreader, the station engine), see the [deep dives](deep-dive/).*
+*This document is a high-level overview. For a step-by-step build guide, see [SETUP.md](../SETUP.md). For subsystem-by-subsystem technical write-ups (voices, DJ scripts, the talk pipeline, music generation, the newsreader, the station engine), see the [deep dives](README.md).*

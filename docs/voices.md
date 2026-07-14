@@ -5,7 +5,7 @@ produced by zero-shot voice cloning from a single short reference clip, then run
 through a fixed post-production chain and a hard quality gate before a single
 second of it is allowed on air. The voices are original characters inspired by
 radio archetypes, not impersonations of real people (see
-[CONTRIBUTING](../../CONTRIBUTING.md)); use only reference audio you have the
+[CONTRIBUTING](../CONTRIBUTING.md)); use only reference audio you have the
 right to use.
 
 This page is the end-to-end technical process: pick a voice, render text in it,
@@ -180,5 +180,5 @@ you can replace the voice engine without touching the rest of the station.
 
 See also: [DJ scripts](dj-scripts.md) (how the words are written),
 [the talk pipeline](talk-pipeline.md) (how renders are stocked and refreshed),
-and [ARCHITECTURE](../ARCHITECTURE.md) for how the voice service sits in the whole
+and [ARCHITECTURE](ARCHITECTURE.md) for how the voice service sits in the whole
 system.
