@@ -14,6 +14,7 @@ PATTERNS='192\.168\.[0-9]|10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]|/Users/[a-z]|/home/[
 # Do not scan the repo plumbing, binaries, or this script's own pattern list.
 HITS=$(grep -rInE "$PATTERNS" . \
   --exclude-dir=.git \
+  --exclude='.git' \
   --exclude='*.mp3' --exclude='*.wav' --exclude='*.png' --exclude='*.webp' \
   --exclude='scrub.sh' 2>/dev/null || true)
 

@@ -1,184 +1,213 @@
-# Deep dive: producing and running a presenter voice
+# Deep dive: presenter voices
 
-Every presenter on the network is a distinct, consistent AI voice. Each one is
-produced by zero-shot voice cloning from a single short reference clip, then run
-through a fixed post-production chain and a hard quality gate before a single
-second of it is allowed on air. The voices are original characters inspired by
-radio archetypes, not impersonations of real people (see
-[CONTRIBUTING](../CONTRIBUTING.md)); use only reference audio you have the
-right to use.
+Studay FM uses Chatterbox as a reference-conditioned speech synthesizer. The
+technical model is often described as zero-shot voice cloning, but the station
+workflow is designed around fictional presenter characters, private provenance,
+bounded rendering, and approved-only playout.
 
-This page is the end-to-end technical process: pick a voice, render text in it,
-make it broadcast-ready, and keep bad renders off the air.
-
-```
-reference clip  ─┐
-                 ├─►  TTS (zero-shot clone)  ─►  raw wav  ─►  QA + post chain  ─►  approved wav  ─►  playout
-script text    ──┘        one-shot per render      (quiet,        (loudnorm, pad,      (review_status
-  (per host)              exaggeration / cfg        candidate)      silence guard)       = approved)
-```
-
-## 1. The model
-
-The voice engine is a **zero-shot voice-cloning TTS**. This build uses
-[Chatterbox](https://github.com/resemble-ai/chatterbox) (about 0.5B parameters).
-It has no named voices: you hand it text plus one reference clip and it renders
-that text in the reference's voice.
-
-- It runs on a box with a GPU or plenty of unified memory. The renderer selects
-  CUDA, then Apple MPS, then CPU. Keep it **off the streaming box**: heavy
-  inference next to the live encoder causes stream cutouts. In a multi-machine
-  setup the voice service lives on its own node.
-- Two render dials:
-  - **exaggeration** (0.0 to 1.0): emotion intensity. About 0.5 is neutral.
-  - **cfg_weight** (0.0 to 1.0): classifier-free guidance.
-
-## 2. The reference clip
-
-One short, clean, characterful clip per presenter.
-
-- A few seconds up to roughly fifteen is plenty for zero-shot cloning. More is
-  not better.
-- Mono WAV. Capture the **timbre and cadence** you want the host to have. Avoid
-  music beds, background noise, heavy reverb, and overlapping speakers, the model
-  clones whatever is in the clip.
-- The clip defines the voice: everything that presenter ever says is generated
-  from it. Keep one canonical reference per host in a known location and point
-  the host's render config at it.
-
-## 3. Rendering text to speech
-
-### Chunking
-
-The model truncates long inputs, so long text is split into sentence-sized
-chunks (about 250 characters), each chunk is rendered separately, and the pieces
-are concatenated with a short (about 0.12 s) gap for a smooth join. An over-long
-single sentence is split further on commas.
-
-### Preparing the text (write for the model, not the page)
-
-Transform pronunciation-hostile tokens **before** feeding the model, while
-keeping the human-readable form in the stored script:
-
-- **Spell out initialisms phonetically.** A bare `F M` renders as garble
-  ("fm fm" and worse); feed the model `Eff Em`. Do the same for any acronym the
-  model mangles.
-- **No load-bearing first word.** The model can swallow the very first syllable,
-  so do not open on a word the sentence depends on.
-- **No ultra-short lines.** One or two word utterances render unreliably.
-
-These are rules the script-writing layer enforces (covered in the DJ-scripts deep
-dive); the renderer applies the pronunciation substitutions as a final pass.
-
-### Render parameters, and the one lesson that matters
-
-Practical starting points:
-
-| Voice | exaggeration | cfg_weight |
-|---|---|---|
-| Conversational DJ | ~0.55 (a touch lower, ~0.48, for a fast/hot delivery) | ~0.45 |
-| Calm newsreader | ~0.25 | ~0.40 |
-
-**Do not raise exaggeration to add weight or gravitas.** Past a point it
-destabilizes the accent (a calm reader pushed to ~0.35 started drifting into the
-wrong accent entirely). Depth and body come from the **post chain** below, not
-from overdriving the model. Treat exaggeration as "how animated", not "how big".
-
-### One render per process (memory hygiene)
-
-A long-lived TTS process leaks GPU / unified memory from one render to the next.
-Run the renderer as a **one-shot CLI**: it loads the model, renders one clip,
-writes the WAV, and exits. A controller feeds it jobs one at a time. Memory stays
-flat across a batch of hundreds instead of climbing until the box swaps.
-
-## 4. The post chain and the quality gate
-
-Raw model output is quiet (around -34 dBFS) and untreated. It is tagged
-`review_status = "candidate"`. **The playout only ever airs
-`review_status = "approved"`.** A QA step bridges the two, and it is where a lot
-of the "sounds like radio" comes from.
-
-### Loudness and padding (do not trim)
-
-```
-loudnorm=I=-15:TP=-1.5:LRA=11,adelay=250:all=1,apad=pad_dur=0.6
+```text
+rights-cleared private reference + candidate script
+                         |
+              bounded Chatterbox render
+                         |
+                    candidate WAV
+                         |
+             post chain + technical QA
+                         |
+                  fixed review decision
+                         |
+              atomic approved manifest
+                         |
+                       playout
 ```
 
-- Normalize to a broadcast target (here -15 LUFS integrated, -1.5 dBTP true peak,
-  loudness range 11), and resample to a consistent format (24 kHz mono).
-- **Do not silence-trim the tails.** Clone tails decay below typical trim
-  thresholds (around -45 dB), so an aggressive `silenceremove` eats the last word
-  or syllable (hosts get "cut off mid sentence"). Instead pad a short lead
-  (250 ms via `adelay`) and tail (0.6 s via `apad`) so the whole word survives and
-  breathes.
+## 1. Creative intent
 
-### Optional per-voice timbre chain
+The production characters came from one accepted adaptation per role. There was
+no iterative process aimed at increasing resemblance to a named inspiration.
 
-For a voice the clone renders thin, insert a fixed timbre chain **before**
-loudnorm, so normalization lands on the final tone rather than fighting it. A
-worked example for a deeper, warmer newsreader:
+Later pitch, EQ, timing, compression, and loudness work shaped distinct station
+characters. The news voice processing, in particular, moved the result farther
+from its inspiration. A historical filename containing words such as `clone`, or
+an imprecise old code comment about timbre, is not evidence of impersonation or
+soundalike intent.
 
+That clarification does not erase source-rights obligations. A result can sound
+different and still require permission, licence review, attribution, or
+withdrawal handling.
+
+## 2. Private provenance ledger
+
+For every source and derived reference, a private ledger should record:
+
+1. internal source ID and private location;
+2. source description and acquisition date;
+3. asserted permission, licence, or consent basis;
+4. permitted use, territory, duration, attribution, and redistribution limits;
+5. transformations and derived files;
+6. presenter/show mapping and first use;
+7. review date and unresolved questions;
+8. withdrawal contact and removal procedure;
+9. current status: candidate, active, rejected, retired, or deleted.
+
+Do not infer permission from public availability, a short excerpt, one-shot use,
+or lack of resemblance. Raw references must not enter Git, public site data,
+queue logs, documentation, issue attachments, or chat.
+
+## 3. Reference preparation
+
+Use only audio you have the right to process.
+
+A useful reference is:
+
+- short, clean, and single-speaker;
+- mono WAV;
+- free of music, room noise, overlapping speech, and heavy reverb;
+- long enough to carry stable timbre and cadence, but not needlessly large;
+- stored as an owner-only regular file beneath an approved private root.
+
+One canonical reference per presenter keeps output consistent and makes
+withdrawal manageable.
+
+For deployment smoke tests, prefer Chatterbox's generic no-reference voice. It
+proves the model and audio path without involving private source material.
+
+## 4. Renderer boundary
+
+Production can use a one-shot CLI over a restricted remote account or an
+authenticated internal HTTP service.
+
+### CLI or SSH boundary
+
+- fixed host/account and renderer entry point;
+- argv-safe or strictly shell-quoted arguments;
+- approved reference and output roots;
+- no arbitrary remote shell exposure;
+- one render at a time;
+- bounded execution timeout;
+- private temporary files removed after transfer.
+
+### HTTP boundary
+
+- startup fails without a strong private token;
+- wildcard production binds are refused;
+- health and synthesis both require authentication;
+- JSON content type and body length are mandatory;
+- text, reference, output, and audio sizes are bounded;
+- unexpected fields and invalid numeric ranges are rejected;
+- reference and output paths must stay under configured roots;
+- symlinks and path escapes fail;
+- concurrent synthesis returns `429` instead of building a backlog;
+- generated output is written atomically with private permissions.
+
+Internal network placement is not a substitute for these controls.
+
+## 5. Text preparation
+
+Write for speech rather than for a page:
+
+- output spoken words only, no stage directions or Markdown;
+- avoid one- or two-word utterances;
+- do not put a load-bearing word at the very start;
+- normalize station-name pronunciation before rendering;
+- split long text at sentence boundaries, and then commas if necessary;
+- join chunks with a small, consistent gap.
+
+The stored script remains human-readable. Pronunciation substitutions belong in
+the renderer input, not the editorial record.
+
+## 6. Render parameters
+
+Chatterbox exposes two important controls:
+
+- `exaggeration`: how animated the delivery is;
+- `cfg_weight`: how strongly the render follows conditioning.
+
+Start conservatively. A conversational presenter can use a moderate
+exaggeration; a newsreader should be calmer. Raising exaggeration to make a
+voice sound “bigger” can destabilize accent and pacing.
+
+Render parameters belong in the sidecar so a candidate can be reproduced and
+compared.
+
+## 7. Process lifetime
+
+One-shot rendering is the safest baseline for a batch:
+
+1. load the model;
+2. render one candidate;
+3. write the WAV;
+4. exit.
+
+This keeps memory behavior predictable. A long-lived service can be used if it
+is demonstrably stable, serialized, bounded, and supervised, but it must not
+run on the real-time streaming path.
+
+## 8. Post-production
+
+Raw speech is normalized and padded before technical review. A representative
+chain:
+
+```text
+optional character EQ/pitch/compression
+-> loudness normalization
+-> short leading pad
+-> short trailing pad
 ```
-aresample=24000,asetrate=24000*0.95,aresample=24000,atempo=1.0526,
-bass=g=4:f=140:w=0.6,
-acompressor=threshold=-18dB:ratio=2:attack=20:release=250:makeup=2dB
-```
 
-- `aresample` first pins the rate so the pitch math is stable whatever the model
-  emits.
-- `asetrate` * 0.95 drops the pitch about 5%; the matching `atempo=1.0526` puts
-  the duration back so only the pitch moves.
-- `bass` adds a low shelf (+4 dB at 140 Hz) to restore the chest resonance the
-  clone loses.
-- `acompressor` adds gentle broadcast weight.
+Do not aggressively silence-trim the tail. Quiet final consonants and word
+decays can fall below a trim threshold and make the presenter sound cut off.
 
-Tune body **here**, not by cranking exaggeration.
+Optional pitch and EQ are character-shaping tools, not likeness-restoration
+tools. Their purpose is consistency and intelligibility in the station mix. In
+the news chain, the chosen processing moved the result farther from the original
+inspiration.
 
-### The silence guard
+## 9. Technical QA
 
-Reject botched renders. Run `silencedetect` and if any internal silence exceeds
-about 4 seconds, mark the clip `review_status = "rejected"` and never air it:
+The spoken-word profile validates:
 
-```
-silencedetect=noise=-38dB:d=4
-```
+- regular supported audio;
+- allowed sample rate and channel count;
+- duration inside the configured range;
+- no excessive internal silence;
+- loudness and true peak inside broad safety limits.
 
-On pass, overwrite the WAV in place and set `review_status = "approved"`,
-recording the QA parameters in the sidecar.
+QA is fingerprint-bound. Replacing or modifying the file invalidates the cached
+pass. A clip with a stale pass cannot enter the next manifest.
 
-## 5. Metadata and the approved-only contract
+## 10. Review and approval policy
 
-Every clip carries a JSON sidecar next to the WAV: the host, the voice reference
-used, `review_status`, the render params (exaggeration / cfg), timings, and the
-QA result. The playout selects **only** approved clips; candidate and rejected
-clips sit inert on disk. That single property, approved-only playout, is what
-guarantees a bad render cannot reach listeners.
+The recurring talk and continuity path can assign `approved` automatically after
+the script validators and technical speech QA pass. The hourly news path adds its
+structured source and editorial gate. This is fixed code under owner control, not
+a decision delegated to the model through an operations tool.
 
-## 6. Scaling and reliability
+Manual listening remains appropriate for:
 
-- **Batch and parallelize.** A controller can fan render jobs across several
-  render boxes as a worker pool (one job at a time per box), skipping any clip
-  that already exists so a run is resumable and idempotent. Rendering a full
-  refresh of every host's talk pool is embarrassingly parallel.
-- **Always keep a fallback.** The playout should fall back to music (or a short
-  continuity bed) if a talk clip is missing, so a flaky render never becomes dead
-  air.
-- **Chatterbox gotcha.** Its watermarker imports `pkg_resources`, which
-  setuptools 81+ removed. Pin `setuptools<81` or the model fails to initialize
-  with a confusing `NoneType` error.
+- a new or replaced character reference;
+- changed render parameters or post-processing;
+- a new presenter or format;
+- a suspicious candidate or watchdog alert;
+- provenance, likeness, pronunciation, or editorial concerns.
 
-## 7. The swap-in contract
+The owner can reject or withdraw material and should audition representative
+canaries before enabling a changed renderer. Only policy-approved, technically
+current clips can enter the atomic manifest. Candidate and rejected files remain
+inert.
 
-None of the station is bound to one TTS. The rest of the system only needs one
-thing: **text in, a WAV in the host's voice out.** Wrap whatever engine you use
-behind that contract, either a one-shot CLI as above or a small HTTP service with
-a `POST /tts` endpoint taking `{ text, voice_ref, exaggeration, cfg }` and
-returning audio. Keep the `candidate -> QA -> approved` lifecycle around it and
-you can replace the voice engine without touching the rest of the station.
+## 11. Swap-in contract
 
----
+The wider station does not depend on one speech model. A replacement renderer
+only needs to preserve:
 
-See also: [DJ scripts](dj-scripts.md) (how the words are written),
-[the talk pipeline](talk-pipeline.md) (how renders are stocked and refreshed),
-and [ARCHITECTURE](ARCHITECTURE.md) for how the voice service sits in the whole
-system.
+- text in;
+- optional private character reference;
+- WAV out;
+- bounded, authenticated, path-confined execution;
+- candidate metadata;
+- technical QA and the applicable fixed approval policy before manifest
+  publication.
+
+Keeping that contract around the model makes speech engines replaceable without
+weakening the airplay boundary.

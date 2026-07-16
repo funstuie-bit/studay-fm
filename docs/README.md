@@ -1,34 +1,49 @@
-# Deep dives
+# Studay FM deep dives
 
-Technical write-ups of how the network is actually built, subsystem by subsystem.
-These describe the process and the practical technique (real parameters, recipes,
-and the lessons behind them), not any one private deployment. For the high-level
-shape first, read [ARCHITECTURE](ARCHITECTURE.md); to run a small version of the
-whole thing, see the [demo quickstart](../README.md#run-your-own).
+These pages describe the production design without publishing a private
+deployment. The deep dives are flattened directly into `docs/` in this public
+repository.
+
+Start with [Architecture](ARCHITECTURE.md), then choose a subsystem:
 
 | Page | What it covers |
 |---|---|
-| [Voices](voices.md) | Producing a presenter voice: reference clips, zero-shot cloning, render params and the "don't overdrive" lesson, the timbre and loudness post chain, the silence guard, and the swap-in contract. |
-| [DJ scripts](dj-scripts.md) | Writing what the hosts say: the per-character brief, the provider-agnostic LLM call, the validate-or-reject gate, anti-staleness, and the deterministic fallback. |
-| [The talk pipeline](talk-pipeline.md) | The ongoing lifecycle: render, QA, approve, and the self-healing maintenance loop that keeps every host's pool stocked, with its single-tool, hard-denylist guardrails. |
-| [Music generation](music.md) | Text-to-music: the locked recipe, positive-only captions, the single-flight lock, the quality gate, per-show lanes, and the "backfill, do not wipe" rule. |
-| [The newsreader](newsreader.md) | The hourly music-and-culture bulletin: feeds, dedupe and rotation, the LLM write, the track-sensitive fallback that airs it, and the render-once fan-out across stations. |
-| [The station engine](station-engine.md) | The scheduler and playout: the clock, the three simultaneous track-selection rules, schedule validation, one continuous normalized MP3, and truthful now-playing. |
-| [The site](site.md) | The single-page app: a small template framework over React, hash routing, a persistent player, the truthful now-playing card, and the JSON feeds it reads. |
-| [Continuity and the diary](continuity.md) | The non-DJ continuity voice: hour-boundary idents, the flow-station between-track weave, and the LLM-written public diary grounded in real state. |
-| [Public access and serving](serving.md) | Reaching it from the internet: an outbound-only tunnel, one hostname path-routed to the site and each mount, the one-connector law, and edge caching. |
-| [Reliability](reliability.md) | Staying up: the health watchdog and its checks, transition-only alerting, the always-on service model, and the hard-won lessons behind them. |
+| [Presenters](PRESENTERS.md) | Fictional roster, schedule, voice intent, provenance boundary |
+| [Station engine](station-engine.md) | Five playouts, flagship clock, approved manifests, continuous MP3, truthful now-playing |
+| [Music generation](music.md) | ACE-Step recipe, authenticated bounded API, queue v2, technical QA, lane rotation |
+| [Voices](voices.md) | Reference-conditioned speech, one-shot creative intent, renderer containment, post-processing, QA |
+| [DJ scripts](dj-scripts.md) | Character briefs, bounded LLM calls, validation, candidate metadata, deterministic fallback |
+| [Talk pipeline](talk-pipeline.md) | Fixed producer workflow, review, QA, manifests, stocking, freshness, retirement |
+| [Newsreader](newsreader.md) | Bounded feeds, structured source IDs, attribution gate, render-once fan-out |
+| [Continuity and diary](continuity.md) | Hour markers, flow links, grounded diary, atomic publication |
+| [Site](site.md) | Five-station SPA, validated live JSON, persistent player, privacy and frontend constraints |
+| [Serving](serving.md) | Loopback origins, outbound tunnel, path allowlist, public build boundary, headers |
+| [Reliability](reliability.md) | Watchdog, readiness, queue recovery, transition alerts, service isolation, retention |
 
-A few principles run through all of them:
+## Principles shared by every subsystem
 
-- **Approved-only playout.** Everything generated (music and talk) is a `candidate`
-  until it passes an automated quality gate and becomes `approved`. Only approved
-  assets air, so a bad generation cannot reach listeners.
-- **Provider-agnostic LLM.** Every text task (scripts, news, the maintenance loop)
-  speaks the plain OpenAI-compatible chat API, so the same setup runs on a hosted
-  model or a local one by changing a base URL.
-- **Heavy work off the streaming box.** Music generation and voice rendering run on
-  their own nodes; the streaming box only schedules, encodes, and serves.
-- **Fail safe, never silent.** Fallbacks at every layer (a deterministic script line,
-  a music fallback, an empty-safe news fallback) mean a flaky backend degrades
-  gracefully instead of producing dead air.
+- **Studay is canonical.** Legacy names are historical upstream attribution, not
+  current runtime identities.
+- **Approved-only playout.** Review, current technical QA, and an atomic manifest
+  are all required.
+- **State is contracted and atomic.** Writers validate before durable replace;
+  readers reject malformed or stale evidence.
+- **Models do not administer the station.** The current operator and private ops
+  bot share one typed read-only query surface.
+- **Local self-governance is deferred.** The local coordinator and earlier
+  local-model Hermes setup were unreliable; the current private Hermes gateway
+  uses a bounded DeepSeek fallback while mutation remains owner-controlled.
+- **Internal APIs are still security boundaries.** Authentication, size limits,
+  path containment, symlink rejection, and single-flight behavior apply on the
+  LAN too.
+- **News is source-traceable and fail-closed.** Attribution and metadata are
+  required, but human correction and source curation remain necessary.
+- **Heavy work stays off the audio path.** Music and voice generation do not
+  compete with real-time encoders.
+- **Media lives outside Git-adjacent storage.** Retention is audit-first and does
+  not delete approved or active material.
+- **The public site is an allowlisted build.** The repository, private state,
+  candidate review, references, and operations documents are not web roots.
+
+For the small Docker-compatible demo, return to the
+[README quickstart](../README.md#run-your-own) and [SETUP.md](../SETUP.md).

@@ -1,55 +1,274 @@
-# Architecture
+# Studay FM architecture
 
-Studay FM is built so that the always-on streaming box stays light while the heavy machine-learning work runs as independent services. The three expensive jobs, composing music, voicing the DJs, and writing the programming, are decoupled, so they can run on one machine or several.
+Studay FM is a five-station radio network built around a small stream origin,
+independent playout graphs, bounded generation services, approved-only media,
+validated runtime state, and owner-controlled operations.
 
-## The three services
+This is a public reference architecture. Paths, hosts, credentials, private
+voice material, deployment recovery details, and the live media library are
+intentionally omitted.
 
-**Music**, a local text-to-music foundation model (ACE-Step) runs as an HTTP service. Given a positive-only style caption it returns a finished track. Generation is serialised behind a single lock (the model is single-flight; concurrent inference is unstable), and every result passes a quality gate (silence, clipping and length checks) before it can ever air.
+## System shape
 
-**Voice**, a zero-shot TTS (Chatterbox) runs on a separate box with plenty of unified memory. Each presenter has one short reference clip that fixes their voice; every line they say is generated in that one consistent voice, a character of its own rather than an impersonation. Renders are loudness-matched to the music and pass a silence guard so a broken clip can never reach the air.
+```text
+                                public listeners
+                                       |
+                             HTTPS at the edge
+                                       |
+                         outbound-only named tunnel
+                                       |
+                  +--------------------+--------------------+
+                  |                                         |
+          approved stream paths                       approved site paths
+                  |                                         |
+          Icecast on loopback                       Caddy on loopback
+                  |                                         |
+    +-------------+-------------+                static app + live JSON
+    |       |       |       |    |
+ flagship  lofi   yacht   jazz  C'est
+    ^       ^       ^       ^    ^
+    +-------+-------+-------+----+
+           Liquidsoap playout
+                  |
+       approved manifests + atomic state
+                  |
+      configurable external media root
+                  |
+        +---------+----------+
+        |                    |
+   private queue       scheduled producers
+        |                    |
+ authenticated ACE     bounded Chatterbox
 
-**Language**, an LLM writes every DJ break, the news bulletin, and the continuity diary, each in the right voice, against a per-character brief with allowed and forbidden topics and a validation pass that rejects off-voice output. It also drives a maintenance loop (below). The LLM layer is **provider-agnostic**: it speaks the plain OpenAI-compatible chat API, so the whole thing runs on a local model or a hosted one by changing a base URL, and different tasks can point at different models.
+ watchdog -> readiness -> typed read-only query -> owner / bounded LLM summaries
+```
 
-## The operator
+## Five stations, two playout styles
 
-The operator is the part that makes it feel like a real station rather than a shuffle. It builds a full schedule on a fixed clock, and for every slot it:
+The network has exactly five current dials:
 
-- **picks the show** for that hour (a full weekday clock, a weekend crew that swaps in on Saturday and Sunday, and weekly specials taking over their slots on the right days)
-- **chooses each track** from the correct show's music lane, honouring three rules at once:
-  - no song repeats too soon (a wide rotation gap)
-  - no two tracks of the same style play back to back (genre spacing)
-  - a show never reaches into another show's lane until its own and its compatible lanes are exhausted (so a pop show never drifts into country)
-- **cues the DJ** at the show's natural cadence, choosing a break that hasn't aired recently
-- **threads continuity** with the Signalman between programmes
-- **writes the diary**, a short reflective note in the Signalman's voice on the state of the station
+| Station | Playout style | Notable programming |
+|---|---|---|
+| Studay FM | Schedule-driven | Weekday clock, weekend replacements, specials, DJ breaks, continuity |
+| StuLoFiDay | Flow | Time-of-day lo-fi pools |
+| Yacht Zone | Flow | Yacht rock by day, house by night, sparse host breaks |
+| Tokyo Jazz Hop | Flow | Continuous instrumental jazz-hop |
+| C'est Magnifistu | Flow | Eclectic music, Airelle continuity, hourly music-and-culture bulletin |
 
-The schedule is validated before it goes live (no impossible gaps, no missing shows, no empty pools) and the live now-playing is driven by the *actual* file playing, not a wall-clock guess.
+The flagship builds a timestamped schedule from show rules and writes a flat
+playlist. The four flow stations use watched, approved manifests with simpler
+time or rotation rules. All five produce one continuous, normalized MP3 and
+publish to separate Icecast mounts.
 
-Separately, a lightweight **maintenance loop** keeps the station healthy hour to hour. It reads a brief of real state (the schedule, each show's talk-pool depth, the watchdog's health) and, if a talk pool is running thin, restocks it through the script -> render -> quality-gate pipeline. It is the same provider-agnostic LLM layer with a single shell tool and a hard denylist (never touch the stream, never delete, never spend money without a human), and every action is logged.
+Independent graphs matter operationally: one station can restart or lose a
+content pool without forcing a network-wide restart.
 
-## Playout
+## Approved-media boundary
 
-The network runs several stations at once: show-scheduled stations like the flagship, and continuous "flow" stations (a lo-fi channel, a yacht/house channel, a jazz-hop channel, and a European-flavoured eclectic channel that also carries an hourly music-and-culture news bulletin). Each station is a continuous, gapless, loudness-normalised **MP3** stream produced by Liquidsoap and published to its own Icecast mount. This replaced an earlier per-track playout that produced timing discontinuities and didn't play in every browser. The real-time encoders run at interactive process priority so they are never starved by background work, the difference between a broadcast that holds and one that stutters.
+Generated media follows a fail-closed lifecycle:
 
-## Public access and serving
+```text
+generate -> candidate -> fixed review policy -> technical QA -> approved manifest -> playout
+```
 
-A single Cloudflare named tunnel puts the website and every audio mount on one hostname with **no open inbound ports**, traffic is outbound-only from the stream host. The static single-page site is served with compression and edge caching, so the heavy assets are served from the CDN edge rather than round-tripping to the box on every request.
+An `approved` sidecar alone is insufficient. Eligibility requires all of:
 
-## Always-on
+1. a regular audio file beneath an approved media root;
+2. a valid, same-stem metadata sidecar;
+3. an approval status assigned by the applicable fixed review path;
+4. current technical QA tied to the file's device, inode, size, and modification
+   identity;
+5. any subsystem-specific gate, such as source provenance for news;
+6. inclusion in the atomically published manifest consumed by playout.
 
-Every component runs as its own user-level service with automatic restart, plus health watchdogs that alert the moment a mount drops, a station goes silent, or a backend stops responding. The content libraries and the schedule self-heal: a thin pool tops itself up, and a rebuilt schedule re-syncs to the wall clock.
+Flagship music supports explicit owner taste review. Recurring presenter speech,
+continuity, flow refreshes, and news can receive approval from narrow
+owner-configured validators. In every case the model lacks an approval tool.
 
-## Hard-won lessons
+The technical gate checks format, sample rate, channel count, duration, silence,
+loudness, and peak against a music or spoken-word profile. If a file changes,
+its cached QA identity no longer matches and it fails closed until rescanned.
 
-A 24/7 broadcast is mostly the unglamorous reliability work:
+Manifest refresh is serialized under one lock and uses durable temporary-file
+replacement. A failed refresh leaves the previous complete manifest in place.
+Liquidsoap never observes a partial playlist.
 
-- **Real-time audio must be high priority.** Encoders left at a throttled QoS get starved under load and fall behind real time. Interactive priority fixes it.
-- **Keep a fallback for every fancy backend** so a flaky model never takes a DJ off the air.
-- **Single-flight ML scales with nodes, not concurrency.** One global lock; add machines to go faster.
-- **Quality-gate everything generated**, a cheap automated check culls duds before they air, and a silence guard saves the dead-air clips.
-- **Put the model where the memory is.** Moving heavy generation off the streaming box ends a whole class of crashes and frees its resources for the streams.
-- **Don't wipe a library all at once**, regeneration is slow, and a show that rolls in empty plays silence. Backfill the current show first.
+## Runtime state and readiness
 
----
+The public site and operations tools consume small state contracts rather than
+scraping process output. Important artifacts include:
 
-*This document is a high-level overview. For a step-by-step build guide, see [SETUP.md](../SETUP.md). For subsystem-by-subsystem technical write-ups (voices, DJ scripts, the talk pipeline, music generation, the newsreader, the station engine), see the [deep dives](README.md).*
+- per-station now-playing;
+- today's flagship schedule;
+- catalogue and diary feeds;
+- watchdog state;
+- a readiness document with boolean checks and generation time;
+- generation-queue worker state and terminal receipts.
+
+Writers validate payloads before publication, flush the temporary file, replace
+the destination atomically, and flush the containing directory. Readers reject
+unknown station IDs, invalid timestamps, impossible durations, malformed
+readiness checks, and stale evidence.
+
+Liveness and readiness are separate. A service can be alive while the station
+is not ready. The readiness endpoint returns failure when watchdog evidence is
+red, malformed, missing, or too old.
+
+## Scheduling and truthful now-playing
+
+The flagship scheduler resolves specials before regular shows, walks the clock
+using measured asset durations, enforces track and talk rotation rules, and
+validates the result before publishing it.
+
+Liquidsoap reports the file that actually started. That event, not a wall-clock
+guess, drives now-playing and the progress bar. Flow stations publish the same
+contract from their real track-change callbacks. This gives the website and
+operator one consistent definition of what is audible.
+
+## Generation queue v2
+
+Expensive jobs are private, typed, and single-flight. A job record contains:
+
+- a validated schema and generated ID;
+- job type, label, priority, and optional not-before time;
+- an argv array and approved working directory;
+- bounded attempts and timeout;
+- status, lease identity, heartbeat, and result.
+
+The worker starts one supervisor and one command child at a time. The supervisor
+persists long enough to write an atomic exit receipt. If the worker restarts, it
+recognizes a live leased child or consumes the receipt; it does not blindly
+launch a duplicate generation.
+
+Queue mutation is equivalent to local command authority, so only trusted owner
+workflows may enqueue, retry, reprioritize, or remove work. The LLM-facing tools
+can read a bounded queue summary but cannot change it.
+
+## Music and voice services
+
+### ACE-Step
+
+The music service is treated as an internal API, not a trusted library call:
+
+- bearer authentication applies to health and generation routes;
+- the listener binds to one intended interface, not every interface;
+- request, upload, duration, inference, and response sizes are bounded;
+- one generation runs at a time and overload returns immediately;
+- production API documentation is disabled;
+- temporary and output files stay inside approved roots;
+- the client allowlists endpoint shape and output extensions, rejects symlinks,
+  and writes audio atomically.
+
+### Chatterbox
+
+Chatterbox is used as reference-conditioned speech synthesis. Rendering can run
+as a one-shot remote CLI or behind a small internal HTTP service. Either boundary
+must provide:
+
+- private reference storage and output containment;
+- shell-safe argv or strict JSON parsing;
+- authentication for an HTTP boundary;
+- bounded text, request, reference, and audio size;
+- serialized model use with immediate overload rejection;
+- symlink and path-escape rejection;
+- a generic, no-reference smoke test for deployment validation.
+
+## News boundary
+
+RSS is untrusted data. Feed responses, redirects, item counts, text fields, and
+aggregate input are bounded before an LLM sees them. Candidate records receive
+short source IDs; the model must return a structured bulletin and two or three
+selected IDs.
+
+The deterministic gate rejects:
+
+- the wrong number of stories;
+- unknown or duplicate IDs;
+- prohibited hard-news terms;
+- missing spoken outlet attribution;
+- insufficient linkage to each selected headline;
+- missing source URLs;
+- invalid script shape or length.
+
+Approved metadata retains source title, outlet, URL, published/fetched times,
+and the verification record. Technical QA and approved-manifest publication are
+still required. This creates traceability and a correction trail; it does not
+make an LLM a fact-checker.
+
+## Operations and model authority
+
+The canonical local operations surface is a typed, read-only CLI. Its commands
+return status, health, now-playing, queue summary, lane depth, talk stock, flags,
+and bounded tails of allowlisted logs.
+
+The scheduled operator and private ops bot receive the same fixed station-query
+tool. Their model endpoint, request size, response size, step count, tool output,
+and session duration are bounded. They have no terminal, filesystem, browser,
+memory, queue, approval, generation, service-control, or deployment capability.
+
+The project attempted a fully local coordinator and an earlier local-model
+Hermes setup. Those paths were not reliable enough for safe operational tool
+use. The current private Hermes gateway uses a bounded DeepSeek fallback to
+observe and recommend. Mutation remains an owner action. A future local
+coordinator should not gain mutation until tool reliability, account isolation,
+credentials, egress, and command policy have all been reviewed.
+
+## Public ingress
+
+Icecast and Caddy listen on loopback. A named tunnel connects outbound to the
+edge and routes only:
+
+- the five stream mount paths and intended public status resource to Icecast;
+- the built public site allowlist to Caddy.
+
+Caddy serves a generated public directory, not the repository. Candidate review,
+voice references, private reports, operational state, and documentation are not
+copied into that directory. Security headers restrict framing, referrers, browser
+permissions, MIME sniffing, cross-origin opener behavior, and script/network
+origins.
+
+## Storage and retention
+
+Long-lived generated media belongs in a configurable external media root rather
+than beside Git metadata. A compatibility link may be used during a staged
+migration, but new consumers should resolve the canonical root and perform
+containment against its real path.
+
+Retention is audit-first. The scheduled pass can identify old experiment,
+reject, retired, and archive material, but excludes runtime, approved, scheduled,
+on-air, bulletin, continuity, and private voice-reference data. Quarantine is an
+explicit recoverable owner action. Automatic deletion is intentionally a separate
+future policy.
+
+## Supply chain
+
+Core automation, Chatterbox, fallback speech, and any model proxy use isolated
+frozen environments. A complete change gate should include:
+
+- lock verification and frozen synchronization;
+- tests and critical lint;
+- secret scanning;
+- OSV review with narrow, expiring exceptions;
+- deterministic CycloneDX SBOM verification;
+- station-naming checks;
+- pinned CI actions.
+
+Runtime services do not resolve or install dependencies while the station is on
+air.
+
+## Sources of truth
+
+| Concern | Authority |
+|---|---|
+| Station list and mounts | Station registry |
+| Flagship clock and presenter mappings | Flagship configuration |
+| C'est programming intent | C'est configuration plus generator and playout code |
+| Eligible media | Review metadata, current QA cache, and approved manifest together |
+| Audible item | Liquidsoap track-change state |
+| Overall readiness | Fresh validated watchdog readiness |
+| Generation work | Private queue records, lease state, and receipts |
+| Voice provenance | Private rights/provenance ledger |
+| Deployment | Reviewed revision, frozen environment, and loaded service definition |
+
+For subsystem details, continue through the [deep-dive index](README.md). For the
+small public demo, use [SETUP.md](../SETUP.md).
