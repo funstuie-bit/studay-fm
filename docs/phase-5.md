@@ -101,6 +101,12 @@ The change gate combines:
 - deterministic SBOM verification;
 - runtime capture and health evidence for playout changes.
 
+Runtime monitoring also keeps cadence separate from content provenance. The
+hourly diary writer receives a 75-minute liveness allowance, while two
+consecutive deterministic-fallback entries trigger their own provenance alarm.
+This avoids both false freshness alerts and silent degradation of the preferred
+writing path.
+
 CI runs under a dedicated unprivileged identity without production secrets.
 Protected-branch status is tied to the exact quality/security job for the
 reviewed revision.

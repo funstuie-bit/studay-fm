@@ -122,6 +122,15 @@ If no model is available, a deterministic entry is composed from the same facts.
 The entry records its writer/source so a reader can distinguish fallback from a
 model-generated note.
 
+The writer runs once per hour. Watchdog liveness allows up to 75 minutes between
+published entries so ordinary scheduler and generation jitter does not create a
+false outage. That age check answers only whether the diary is still advancing.
+
+Provenance quality is checked separately. Two consecutive entries attributed to
+the deterministic fallback raise an alarm even when both entries are fresh.
+This distinguishes a healthy hourly publishing loop from a model-writing path
+that has silently remained unavailable.
+
 ## 7. Append-only ledger
 
 Diary entries are first appended to a private event ledger. Entry IDs are
@@ -145,7 +154,8 @@ Continuity depth and freshness are separate checks. The watchdog can flag:
 - newest approved line too old;
 - producer heartbeat stale;
 - manifest stale or technically ineligible;
-- diary feed older than expected.
+- diary feed older than its 75-minute liveness allowance;
+- two consecutive diary entries carrying fallback provenance.
 
 Retirement moves old approved lines out of watched directories only after they
 are no longer scheduled or on air. The scheduled retention audit excludes
