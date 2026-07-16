@@ -1,168 +1,173 @@
-# Deep dive: the talk pipeline (stocking and refreshing DJ talk)
+# Deep dive: the talk pipeline
 
-Written scripts are not what airs. Between a script and the stream sits a pipeline
-that renders it to audio, quality-gates it, promotes it to `approved`, and keeps
-each host's pool both **deep** enough that no one ever runs out of things to say and
-**fresh** enough that a daily listener is not stuck with the same handful of breaks.
-Two loops drive it: an hourly floor-keeper and a daily freshness pass.
+Presenter scripts do not air directly. They move through a fixed, reviewable
+pipeline that keeps writing, rendering, approval, technical QA, manifest
+publication, and playout as separate stages.
 
+```text
+character brief -> script candidate -> speech render -> technical QA
+                                                |
+                                       fixed approval policy
+                                                |
+                                  approved-media refresh
+                                                |
+                                      atomic talk manifest
+                                                |
+                                           playout
 ```
-scripts (candidate) ─► render (one-shot, on a GPU box) ─► QA + approve ─► approved pool ─► playout
-        ▲                                                                     │ │
-        ├──────────  hourly floor-keeper: restock any thin pool  ◄────────────┘ │
-        └──────────  daily freshness pass: add new, retire oldest  ◄────────────┘
-```
 
-The word-writing is covered in [DJ scripts](dj-scripts.md), the voice render and
-QA recipe in [Voices](voices.md). This page is the lifecycle and the loop that
-runs it.
+The writing layer is covered in [DJ scripts](dj-scripts.md), and speech
+generation in [Voices](voices.md).
 
-## 1. Two review states, and approved-only playout
+## 1. Candidate is not approved
 
-Every talk clip has a `review_status`:
+Talk metadata uses explicit review states:
 
-- `candidate`, rendered, not yet checked.
-- `approved`, passed QA, allowed on air.
-- `rejected`, failed QA, never airs, kept for inspection.
+- `candidate`: generated or rendered, not eligible;
+- `approved`: accepted by the configured fixed review path and eligible for
+  technical publication;
+- `rejected`: retained for diagnosis, never eligible.
 
-**The scheduler only ever selects `approved` clips.** That single rule is the
-safety property of the whole pipeline: a bad or unrendered clip physically cannot
-reach listeners. New approvals are picked up automatically at the playout's next
-schedule rebuild, so nothing needs restarting to put fresh talk on air.
+Playout still requires current technical QA and manifest inclusion. Editing a
+sidecar to `approved` cannot put a clip on air by itself.
 
-## 2. Render
+This split is useful because script validation and technical review answer
+different questions:
 
-A controller fans render jobs across one or more render boxes as a worker pool
-(one job at a time per box), skipping any script that already has audio so a run
-is **resumable and idempotent**. Each render runs the TTS as a **one-shot process**
-that exits afterward (keeps GPU memory flat), writes the WAV, and tags it
-`candidate`. Rendering is confined to a dedicated render node; doing it on the
-streaming box starves the live encoders and causes cutouts. Full detail in
-[Voices](voices.md).
+- Does the line fit the character and station?
+- Is the audio structurally safe and usable?
 
-## 3. QA and approve
+Both must pass.
 
-Only `candidate` clips are processed. The QA step:
+## 2. Fixed producer entry points
 
-- Normalizes to a broadcast target (`loudnorm I=-15:TP=-1.5:LRA=11`, 24 kHz mono)
-  and **pads a lead and tail instead of trimming silence** (trimming ate soft word
-  endings).
-- Runs a **silence guard**: any clip with more than about `4 s` of internal silence
-  is a botched render, marked `rejected`, and never airs.
-- On pass, sets `approved` and records the QA parameters in the sidecar.
+Earlier designs gave an LLM a shell and asked it to keep talk pools stocked.
+That surface has been removed from the operations model.
 
-## 4. The maintenance loop
+Current producers invoke fixed Python entry points with argv arrays. They can:
 
-A long-running operator runs one pass per hour. It does not touch playback or the
-stream; its only job is to keep the approved pools deep enough.
+1. inspect a known show's stock;
+2. write a bounded number of candidate scripts;
+3. render those scripts through the configured voice boundary;
+4. run technical QA;
+5. publish manifests after explicit approvals already exist.
 
-Each pass:
+The read-only operator and private ops bot can report stock and freshness, but
+cannot invoke these steps, enqueue a job, approve a clip, or restart a producer.
 
-1. Takes a lock so two passes never overlap.
-2. Assembles a **brief of real state** and hands it to an LLM agent.
-3. The agent inspects the brief and, for any thin pool, drives the
-   script -> render -> QA pipeline, then reports. Most passes there is nothing to
-   do.
+## 3. Rendering
 
-**The brief of real state** is assembled from live truth only:
+Speech rendering is serialized per render node. A controller:
 
-- The **live schedule** (the current show, and which shows still air later today).
-- **Per-show pool depth**: a count of `approved` clips in each show's talk
-  directory (candidate and rejected do not count).
-- **Watchdog health**: any failing health check surfaced as a red line.
+- validates the configured presenter and reference mapping;
+- skips already completed outputs, making a batch resumable;
+- sends text and paths through shell-safe argv or a bounded authenticated API;
+- confines references and outputs to approved private roots;
+- returns one candidate WAV plus metadata;
+- exits or releases the model before the next job, depending on the renderer
+  architecture.
 
-Each show is tagged against a floor. A pool below the floor is marked thin, and
-the brief ends with an explicit action line listing what to restock.
+Heavy speech inference stays away from the real-time streaming host. A render
+failure leaves approved stock untouched.
 
-**Thresholds**: the floor is about `15` approved clips; a thin pool is restocked
-up to about `30`, prioritising shows that air today, one show at a time. The
-rationale is concrete: the scheduler enforces a multi-hour talk no-repeat, so a
-short show with a thin pool cannot reuse a break and the host goes silent in the
-back half of the show.
+## 4. Technical QA
 
-## 5. Freshness, not just depth
+Spoken-word QA checks:
 
-Keeping a pool above its floor prevents **silence**, but not **staleness**. A pool
-can sit comfortably above the floor while every clip in it is weeks old, so a daily
-listener hears the same few breaks on repeat. Depth and freshness are different
-properties, and a floor-keeper only guarantees the first: once every pool is stocked,
-it has nothing to do and no new talk is ever written.
+- valid audio stream;
+- allowed sample rate and channel count;
+- duration within the spoken profile;
+- no excessive internal silence;
+- loudness and true peak within broad safety bounds;
+- current file identity matching the cached result.
 
-So a second, separate loop runs on a **daily schedule** and, per host, does two things
-independent of the floor:
+The post chain normalizes toward the station target and pads a short lead and
+tail. It does not aggressively trim silence, because trimming can remove quiet
+word endings.
 
-- **Adds a few fresh clips.** It writes a small number of new scripts and takes them
-  through the same render -> QA -> approve pipeline above, so every host gains new
-  material every day, whether or not its pool is thin.
-- **Retires the oldest.** Once a host's approved pool is over a **cap** (set well above
-  the floor), the oldest clips are retired, newest-kept-first, so the pool stays bounded
-  and its median age keeps falling instead of growing forever.
+If the audio file changes after QA, its device/inode/size/mtime fingerprint no
+longer matches and it becomes ineligible until rescanned.
 
-**Retiring is a move, not a delete.** A retired clip's files are moved out of the host's
-pool into a retired folder: recoverable and inspectable, but gone from air. Physically
-moving it (rather than only flipping its sidecar to `retired`) matters because consumers
-differ: the flagship scheduler selects strictly on `approved` and would honour a status
-flip, but a sister station can air a host's folder as a **raw watched playlist** that
-plays every file in it regardless of sidecar, so only removing the file drops it from air
-for both. Retirement is **schedule-aware**: a clip still referenced by the currently-live
-schedule is never moved, because its file must survive until the schedule next rebuilds or
-the stream would hit a missing file mid-air. Anything still on today's schedule is left for
-a later pass.
+## 5. Review policy
 
-This loop is deliberately kept separate from the floor-keeper (section 4). The
-floor-keeper is a safety net against running out; the freshness pass is what keeps the
-station feeling alive day to day. Both are read-only toward the stream, and both go
-through the same approved-only gate.
+Recurring presenter talk is approved by a fixed path: the script must pass its
+character/text validators, the render must pass speech QA, and the sidecar is
+then marked approved. The model cannot set status through a tool, and a technical
+failure becomes rejected.
 
-## 6. The guardrails: one tool, a hard denylist
+The owner controls the character brief, reference mapping, render settings,
+validator code, schedule, and whether the producer is enabled. Manual audition
+is the release gate for a new voice, changed renderer, changed post chain, or
+other material policy change, and remains available for suspicious clips or
+withdrawal.
 
-The maintenance agent is a small ReAct-style loop on the same provider-agnostic
-OpenAI-compatible layer as everything else (bounded: about `40` tool rounds, a
-wall-clock session budget around `30 min`, per-command timeouts). It is given
-**exactly one tool: a shell**, and every command is regex-screened against a hard
-denylist before it runs. A match is refused and returned to the model as an error.
+Private audition pages and source references must stay local-only and outside
+the public web root.
 
-The denylist blocks, among others:
+## 6. Manifest publication
 
-- recursive force delete (`rm -rf`), `kill -9`, killing a live process
-- power or disk operations (`shutdown`, `reboot`, `diskutil`, `dd`, `mkfs`)
-- touching a stream or service job (`launchctl bootout|kickstart|unload|...` against
-  the stream, encoder, or the loop itself)
-- `git push`, `git reset --hard`
-- piping remote code into a shell (`curl ... | sh`), `sudo`, fork bombs
+The approved-media refresh audits changed files and then rebuilds the relevant
+talk manifests under one lock. The publisher includes only regular, contained,
+approved, technically current clips and replaces the manifest atomically.
 
-Prompt-level rules reinforce it and add policy a regex cannot express: **the stream
-is sacred** (never restart a station, report problems rather than fix them),
-**render voice only on the render box**, **do not generate music** (that is manual
-and single-flight, see [Music](music.md)), **the taste gate is human** (the loop
-only checks counts and render success, never judges quality), and **never delete,
-push, change config, spend money, or take any irreversible action without a human.**
-The net design property: an autonomous hourly pass can top up talk but can never
-take the station down or spend money.
+Different consumers can share the same rule:
 
-## 7. Observability and failure modes
+- the flagship schedule reads approved talk inventory;
+- Yacht reads the Captain's approved manifest;
+- C'est reads a separate approved continuity manifest.
 
-Every pass logs its start, finish, and a heartbeat; the full agent transcript is
-appended to a per-day session log; each pipeline stage prints per-item results and
-a summary. The freshness pass stamps its own heartbeat file on every run.
+Newly approved content becomes visible at the next normal schedule or watched
+playlist refresh. No broad service restart is required.
 
-The three ways this silently fails, and the watchdog checks that catch them:
+## 7. Depth and freshness
 
-- **The maintenance loop stops running -> pools drain silently.** A watchdog check
-  reads the service state and alerts if the loop is not running ("pools will
-  drain"). This is a real incident: after the job was left disabled, long shows
-  went silent in their back half before anyone noticed by ear.
-- **A pool goes thin -> the host goes silent late in a show.** A second watchdog
-  check independently recounts approved clips per show against the same floor and
-  alerts on any thin pool.
-- **The pools stay full but stop refreshing -> the station sounds stale.** Depth
-  checks stay green while the newest clip quietly ages, so a third check measures the
-  **age of each host's newest approved clip** and flags any host with nothing new in a
-  day or two, and a **generator heartbeat** check flags if the daily freshness pass has
-  not run. This is the lesson that depth is not freshness, learned the direct way: every
-  pool read healthy while its newest clip was days old.
+Pool depth prevents a host from running out. Freshness prevents a full pool from
+becoming repetitive. They are monitored independently.
 
-The watchdog runs every 15 minutes, alerts only on state transitions (new problem
-or resolved), and can push transitions to a chat webhook. Depth, freshness, and the
-generator heartbeat are independent detectors, so a stall shows up whether the loop
-dies, a pool drains, or generation simply stops producing anything new.
+A bounded floor-keeper can add material when a pool drops below its configured
+minimum. A separate freshness pass can:
+
+- add a small number of new candidates per presenter;
+- leave them off air until reviewed and technically eligible;
+- retire the oldest approved clips once a pool exceeds its cap.
+
+Retirement is a move out of watched/selected directories, not an immediate
+delete. A clip referenced by the current schedule is protected until it is no
+longer live or scheduled.
+
+## 8. Queue use
+
+Large or scarce render batches can be submitted to generation queue v2. Jobs
+store validated argv, working directory, attempts, timeout, priority, and
+not-before time.
+
+The queue runs one supervisor/command child at a time and records lease identity
+plus an exit receipt. Restarting the worker does not duplicate a live render.
+
+Because enqueueing is command authority, queue mutation stays local and trusted.
+Models see only the bounded read-only summary.
+
+## 9. Failure detection
+
+The watchdog distinguishes:
+
+- producer heartbeat stale;
+- approved depth below floor;
+- newest approved clip too old;
+- technical-QA cache stale or failed;
+- manifest different from the eligible set;
+- queue worker stale, invalid record, multiple active children, or dead letter;
+- renderer or approval refresh errors.
+
+This catches both obvious failure and the quieter case where a pool still looks
+full but no new work has appeared.
+
+## 10. Retention
+
+Approved, scheduled, on-air, continuity, bulletin, and private reference
+material are excluded from automated retention selection.
+
+Old rejected, retired, experiment, and archive material may appear in a
+read-only retention report after age thresholds. Moving it to external
+quarantine is a separate explicit owner action. The scheduled retention job does
+not delete talk or references.

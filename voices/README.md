@@ -1,25 +1,35 @@
-# Voices
+# Voice references for the demo
 
-Drop a reference clip here to give a host a real, cloned voice (instead of the
-built-in robotic espeak).
+The Docker demo works without a reference clip. Its bundled espeak service uses
+a basic local voice.
 
-1. Add a short, clean recording, a few seconds of one person speaking is enough,
-   for example `my_host.wav`.
-2. Point a real voice-cloning TTS at it. In `config.yaml`:
+To test a compatible reference-conditioned speech service:
+
+1. Use a short, clean WAV that you have the right to process.
+2. Keep the source private and do not commit it.
+3. Point `config.yaml` at your renderer:
 
    ```yaml
    services:
      tts:
-       url: "http://your-chatterbox-host:8066"   # a Chatterbox (or compatible) server
-       voice_ref: "/voices/my_host.wav"          # this file, as the dj sees it
+       url: "http://your-speech-service:8066"
+       voice_ref: "/voices/my_host.wav"
    ```
 
-This folder is mounted into the `dj` service read-only at `/voices`, so
-`voice_ref` paths start with `/voices/`.
+This directory is mounted read-only into the `dj` service at `/voices`, so the
+container-visible reference path begins with `/voices/`.
 
-The bundled espeak TTS ignores `voice_ref` (it cannot clone). The cloning happens
-in whatever server you point `services.tts.url` at. The contract that server must
-speak is documented at the top of `stack/tts/server.py`:
-`POST /tts {text, voice_ref} -> audio/wav`.
+The bundled espeak service ignores `voice_ref`. A compatible external renderer
+implements the contract documented in `stack/tts/server.py`:
 
-Do not commit real people's voices you do not have the rights to use.
+```text
+POST /tts {text, voice_ref} -> audio/wav
+```
+
+That simple demo contract does not provide production authentication or path
+policy. Before using a remote speech service for a real station, add the bounded,
+authenticated, single-flight, path-confined controls described in
+[SETUP.md](../SETUP.md) and [docs/voices.md](../docs/voices.md).
+
+Do not commit a real person's source recording without explicit permission and
+redistribution rights.

@@ -11,8 +11,8 @@ to start at boot.
 |---|---|---|
 | **Stream host** | this repo's Docker stack (Icecast, Liquidsoap, site, dj, tts) | modest, always-on, the public front door |
 | **Music box** | [ACE-Step](https://github.com/ace-step/ACE-Step) as an HTTP service | a GPU; generates fresh tracks |
-| **Voice box** | [Chatterbox](https://github.com/resemble-ai/chatterbox) behind the `POST /tts` contract | a GPU; clones the DJ voices |
-| **LLM** | any OpenAI-compatible endpoint | local (Ollama, vLLM) or hosted |
+| **Voice box** | [Chatterbox](https://github.com/resemble-ai/chatterbox) behind the `POST /tts` contract | a GPU; renders reference-conditioned presenter speech |
+| **LLM** | any OpenAI-compatible endpoint | content writing only, local or hosted |
 
 You can collapse these onto fewer machines, or keep everything on the stream host
 (the demo default) and only move the heavy pieces out when you need them.
@@ -47,10 +47,16 @@ services:
   ace_step: "http://your-music-box:4009"  # music generation
 ```
 
-The stream host reaches these over your network; keep them on a private network
-or behind a tunnel, not open to the internet. The bundled `tts` (espeak) service
-is only the fallback: once `services.tts.url` points at your Chatterbox, that is
-what voices the breaks.
+The stream host reaches these over your network. The demo's URL fields are a
+simple integration contract, not a production security boundary. Before using a
+remote music or speech service for a real station, add authentication, request
+and response limits, single-flight behavior, path containment, and source-host
+network restrictions as described in [SETUP.md](../SETUP.md). Do not expose a
+model API directly to the internet.
+
+The bundled `tts` (espeak) service is only the fallback. Once
+`services.tts.url` points at a compatible renderer, that service voices the
+breaks. Use only rights-cleared private references.
 
 ## 3. Always-on
 
