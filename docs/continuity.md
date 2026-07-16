@@ -39,8 +39,14 @@ The selection is:
 
 - bounded and rotation-aware;
 - independent of per-show DJ cadence;
+- subject to the shared station speech arbiter;
 - empty-safe, falling through to music or the next scheduled event;
 - validated as part of the schedule before publication.
+
+An hour marker does not outrank the station's audio boundary. If a bulletin or
+presenter link has just played, the marker defers until a full music track has
+completed or is skipped under the fixed policy. This prevents an hourly event
+from creating a voice-on-voice collision.
 
 The script brief keeps the Signalman factual and sparse: short sentences,
 restricted vocabulary, no grand storytelling, and no invented claims about the
@@ -95,6 +101,9 @@ Continuity uses the same speech safety chain as presenter talk:
 
 No sidecar-only edit can put a line on air.
 
+The padded terminal margin remains part of the approved asset, and speech-aware
+playout does not crossfade it away at the next transition.
+
 ## 6. The public diary
 
 The diary is a short reflective summary grounded in real state. A writing pass
@@ -145,6 +154,7 @@ continuity and private references entirely.
 ## 9. Failure behavior
 
 - Missing continuity becomes normal music.
+- A colliding hour marker defers or becomes music rather than stacking voices.
 - Model failure uses a deterministic candidate or skips the cycle.
 - Render/QA failure creates no manifest entry.
 - Malformed diary output is rejected before publication.

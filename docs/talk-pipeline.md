@@ -85,6 +85,12 @@ The post chain normalizes toward the station target and pads a short lead and
 tail. It does not aggressively trim silence, because trimming can remove quiet
 word endings.
 
+Tail padding is a publication boundary, not a cosmetic best effort. The padding
+tool accepts only contained regular source files, rejects symlinked path
+components, bounds source size and measured duration, writes a new output
+atomically, and propagates probe or encoder failures. The approved file therefore
+contains a known safety margin after the spoken endpoint.
+
 If the audio file changes after QA, its device/inode/size/mtime fingerprint no
 longer matches and it becomes ineligible until rescanned.
 
@@ -118,6 +124,11 @@ Different consumers can share the same rule:
 
 Newly approved content becomes visible at the next normal schedule or watched
 playlist refresh. No broad service restart is required.
+
+At scheduling time, all of those speech sources still pass through the
+station's shared speech arbiter. A DJ link, hour marker, or bulletin cannot use
+manifest separation to bypass the requirement for a complete music track
+between voice items. Playout also avoids crossfading the protected speech tail.
 
 ## 7. Depth and freshness
 
@@ -155,6 +166,7 @@ The watchdog distinguishes:
 - approved depth below floor;
 - newest approved clip too old;
 - technical-QA cache stale or failed;
+- speech-tail or schedule-boundary validation failed;
 - manifest different from the eligible set;
 - queue worker stale, invalid record, multiple active children, or dead letter;
 - renderer or approval refresh errors.

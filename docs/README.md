@@ -8,6 +8,7 @@ Start with [Architecture](ARCHITECTURE.md), then choose a subsystem:
 
 | Page | What it covers |
 |---|---|
+| [Phase 5 quality and safety](phase-5.md) | Speech-safe playout, reviewed music iteration, bounded local inference, owner feedback, and verification |
 | [Presenters](PRESENTERS.md) | Fictional roster, schedule, voice intent, provenance boundary |
 | [Station engine](station-engine.md) | Five playouts, flagship clock, approved manifests, continuous MP3, truthful now-playing |
 | [Music generation](music.md) | ACE-Step recipe, authenticated bounded API, queue v2, technical QA, lane rotation |
@@ -30,9 +31,15 @@ Start with [Architecture](ARCHITECTURE.md), then choose a subsystem:
   readers reject malformed or stale evidence.
 - **Models do not administer the station.** The current operator and private ops
   bot share one typed read-only query surface.
-- **Local self-governance is deferred.** The local coordinator and earlier
-  local-model Hermes setup were unreliable; the current private Hermes gateway
-  uses a bounded DeepSeek fallback while mutation remains owner-controlled.
+- **Speech categories share one arbiter.** Presenter links, continuity, and
+  bulletins cannot stack; a full music track separates voice items.
+- **Local inference is not a raw model API.** An authenticated loopback gateway
+  exposes only bounded generation for an allowlisted model.
+- **Local self-governance is deferred.** Earlier local coordination was
+  unreliable; mutation remains owner-controlled even when local inference is
+  available.
+- **Music iteration is reviewable.** Prompt pools are versioned, new recipes
+  create candidates, and owner feedback is digest-bound and append-only.
 - **Internal APIs are still security boundaries.** Authentication, size limits,
   path containment, symlink rejection, and single-flight behavior apply on the
   LAN too.

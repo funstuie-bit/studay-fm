@@ -103,6 +103,7 @@ The watchdog measures both level and activity:
 
 - talk and continuity approved counts;
 - newest approved item age;
+- speech-tail padding and one-voice schedule invariants;
 - music pool depth and newest-track age;
 - scheduled producer heartbeat;
 - news feed supply, render attempts, and recent failures;
@@ -168,7 +169,7 @@ Each long-lived component has its own user service:
 - five playout graphs;
 - site-data publisher;
 - queue worker;
-- optional model proxy and private bot gateway.
+- authenticated inference-only model gateway and private bot gateway.
 
 Calendar jobs cover news, content top-ups, watchdog, approved-media refresh, and
 retention audit.
@@ -193,12 +194,33 @@ They cannot:
 - change configuration;
 - deploy code.
 
-The local coordinator and earlier local-model Hermes configuration were
-unreliable, so the current private Hermes gateway uses DeepSeek only as an
-observer and recommender. Owner control is a reliability feature as well as a
-security feature.
+Earlier local coordination was unreliable, so model access remains observational
+and read-only. A local model is reached through an authenticated loopback,
+inference-only gateway that allowlists its model and request shape while
+rejecting administration routes. A hosted provider can be a bounded fallback.
+Owner control is a reliability feature as well as a security feature.
 
-## 13. Retention and storage
+## 13. Isolated change gates
+
+Local and CI verification use the same frozen dependency graph and run:
+
+- the complete test suite and critical lint;
+- canonical naming and public/private-boundary checks;
+- current-tree and history secret scanning;
+- dependency vulnerability review with narrow expiring exceptions;
+- deterministic CycloneDX SBOM generation and comparison.
+
+The CI runner uses a dedicated unprivileged identity and receives no production
+secrets. Required status is attached to the exact quality/security job for the
+reviewed revision, not any coincidentally green workflow.
+
+Some controls stay outside CI because they require platform privilege: host
+firewalls, service identities, egress policy, deployment-key scope, system
+service installation, legacy-secret retirement, and final compatibility-link
+removal. These are documented owner operations with explicit verification and
+rollback, not tasks delegated to a model.
+
+## 14. Retention and storage
 
 Media lives in a configurable external root so Git operations and repository
 size do not govern the broadcast library.
@@ -208,7 +230,7 @@ retired, and archive files while excluding runtime, approved, scheduled, on-air,
 bulletin, continuity, and private references. Quarantine is explicit,
 recoverable, and has no automatic deletion date.
 
-## 14. Failure drills
+## 15. Failure drills
 
 Useful drills include:
 
@@ -219,17 +241,21 @@ Useful drills include:
 - failed approved-manifest refresh preserving prior bytes;
 - invalid now-playing payload rejected before publication;
 - news feed/model/render failure falling back to music;
+- bulletin, hour marker, and DJ link colliding at one boundary;
+- a speech-tail change verified against a captured broadcast transition;
 - one isolated decoder catch-up versus repeated latency degradation.
 
 The objective is a bounded response to the smallest affected component, not a
 blanket restart.
 
-## 15. Hard-won rules
+## 16. Hard-won rules
 
 - Real-time audio gets priority; heavy work goes elsewhere.
 - A model failure must not become dead air.
 - Internal APIs need authentication and limits.
 - Candidate media is never live media.
+- One complete music track separates voice items.
+- Owner feedback must identify the exact asset being rated.
 - State must be valid, atomic, and fresh.
 - Monitor new work, not only standing totals.
 - Restart one component only after evidence.
