@@ -107,10 +107,17 @@ The watchdog measures both level and activity:
 - music pool depth and newest-track age;
 - scheduled producer heartbeat;
 - news feed supply, render attempts, and recent failures;
-- diary generation age.
+- diary generation age and writer provenance.
 
 A full pool can still be stale. Measuring only the floor would miss a generator
 that stopped days ago.
+
+The diary demonstrates why cadence and provenance need separate checks. Its
+writer runs hourly, while liveness permits a 75-minute age to absorb normal
+scheduler and generation jitter. Independently, two consecutive
+deterministic-fallback entries raise a provenance alarm. A fresh feed can
+therefore remain live while correctly reporting that its preferred writing path
+has degraded.
 
 ## 8. Host and network checks
 
