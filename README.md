@@ -66,7 +66,7 @@ the private source clips.
                   |                                       |
        five Liquidsoap playouts                 static app + live JSON
                   |
-       atomic schedules and now-playing state
+       speech-safe schedules and now-playing state
                   |
        approved-media manifests only
                   |
@@ -96,6 +96,14 @@ A single locked publisher rebuilds the watched manifests atomically, so
 Liquidsoap sees either the previous complete list or the next complete list,
 never a half-written playlist.
 
+Speech has an additional playout invariant. On each station, presenter talk,
+continuity, and bulletins share one deterministic arbiter: only one voice item
+can be selected at a time, and a complete music track must play before another
+voice item becomes eligible. Spoken assets carry conservative lead and tail
+padding, and voice endings are not crossfaded into the following event. A missed
+hour marker or unavailable link falls through to music instead of stacking
+voices or clipping a final word.
+
 Runtime JSON follows small validated contracts. Now-playing, schedules, diary,
 catalogue, watchdog state, and readiness are written by temporary-file replace
 with a durable flush. The flagship readiness endpoint fails closed when the
@@ -110,16 +118,18 @@ or chat bot.
 ## The model boundary
 
 Text generation speaks an OpenAI-compatible API, so writing tasks can use a
-local model or a hosted provider. That interchangeability does not grant the
-model operational authority.
+local model or a hosted provider. The local path is reached through an
+authenticated, loopback-only, inference-only gateway. It exposes only the
+required bounded generation route for an allowlisted model; model-management,
+pull, delete, filesystem, and raw administration routes are not forwarded.
+That interchangeability does not grant the model operational authority.
 
-The original goal was a fully local coordinator. In practice, the local
-coordinator and earlier local-model Hermes configuration were not reliable
-enough for safe tool use. The current private Hermes gateway uses a low-cost
-DeepSeek model for bounded observation and recommendations. Both the scheduled
-operator and the private ops bot receive one typed, read-only station-query
-tool. They cannot run a shell, edit files, approve media, enqueue generation,
-restart services, or deploy code.
+The original goal was a fully local coordinator. In practice, earlier local
+coordination was not reliable enough for safe mutation. Both the scheduled
+operator and the private ops bot therefore receive one typed, read-only
+station-query tool. They cannot run a shell, edit files, approve media, enqueue
+generation, restart services, or deploy code. A hosted provider can remain a
+bounded fallback without receiving broader tools.
 
 Complete self-governance remains a future goal, contingent on reliable local
 tool use, a dedicated least-privilege service account, restricted credentials,
@@ -129,7 +139,9 @@ and a separately reviewed mutation policy.
 
 - **ACE-Step** runs as an authenticated, single-flight music service. The client
   allowlists its endpoint, bounds requests and responses, and confines output to
-  approved media roots.
+  approved media roots. Prompt pools are structured and versioned; a changed
+  version creates review candidates and does not silently inherit approval from
+  the previous recipe.
 - **Chatterbox** is used as a reference-conditioned speech renderer. Production
   rendering is serialized and path-confined. An optional HTTP boundary requires
   authentication, bounded JSON/text/audio, approved reference and output roots,
@@ -156,6 +168,12 @@ and a separately reviewed mutation policy.
 | Operations | Per-component supervision, watchdog, readiness, typed read-only CLI |
 | Supply chain | Frozen environments, OSV review, secret scanning, SBOMs, CI gates |
 
+Owner music feedback is recorded in a bounded append-only ledger against the
+digest of the exact reviewed or audible asset. This prevents a delayed review
+action from being applied to a different track after now-playing changes. The
+ledger informs later prompt revisions; it does not approve media or let a model
+rewrite the live prompt pool.
+
 The production media library lives outside Git-adjacent storage. A configurable
 media root supplies playout and generators, while retention is audit-first:
 active, approved, scheduled, on-air, bulletin, continuity, and private reference
@@ -173,7 +191,8 @@ scheduled job does not delete media.
 
 ## Read the deep dives
 
-Start with [Architecture](docs/ARCHITECTURE.md), then use the
+Start with [Architecture](docs/ARCHITECTURE.md), then read the
+[Phase 5 quality and safety summary](docs/phase-5.md) or use the
 [deep-dive index](docs/README.md) for the station engine, music, voices, talk,
 news, site, serving, continuity, and reliability. The small public demo remains
 documented separately in [SETUP.md](SETUP.md).

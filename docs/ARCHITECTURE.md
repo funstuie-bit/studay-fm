@@ -28,6 +28,8 @@ intentionally omitted.
  flagship  lofi   yacht   jazz  C'est
     ^       ^       ^       ^    ^
     +-------+-------+-------+----+
+        speech-safe schedulers
+                  |
            Liquidsoap playout
                   |
        approved manifests + atomic state
@@ -120,6 +122,21 @@ The flagship scheduler resolves specials before regular shows, walks the clock
 using measured asset durations, enforces track and talk rotation rules, and
 validates the result before publishing it.
 
+Speech selection is coordinated across categories rather than implemented as
+three independent clocks. Each station maintains one deterministic speech
+boundary covering presenter links, continuity, and bulletins:
+
+1. at most one speech event can win a scheduling boundary;
+2. once any speech event plays, another speech event remains ineligible until
+   one complete music asset has played;
+3. a colliding or late speech request is deferred or replaced by music;
+4. unavailable speech always falls through to music.
+
+The rule prevents combinations such as bulletin-to-hour-marker-to-DJ from
+forming a voice block. It also avoids relying on an LLM to negotiate real-time
+timing. Speech assets include conservative terminal padding, and playout does
+not crossfade the protected voice tail into the next event.
+
 Liquidsoap reports the file that actually started. That event, not a wall-clock
 guess, drives now-playing and the progress bar. Flow stations publish the same
 contract from their real track-change callbacks. This gives the website and
@@ -206,12 +223,31 @@ tool. Their model endpoint, request size, response size, step count, tool output
 and session duration are bounded. They have no terminal, filesystem, browser,
 memory, queue, approval, generation, service-control, or deployment capability.
 
-The project attempted a fully local coordinator and an earlier local-model
-Hermes setup. Those paths were not reliable enough for safe operational tool
-use. The current private Hermes gateway uses a bounded DeepSeek fallback to
-observe and recommend. Mutation remains an owner action. A future local
-coordinator should not gain mutation until tool reliability, account isolation,
-credentials, egress, and command policy have all been reviewed.
+The project attempted a fully local coordinator before its tool behavior was
+reliable enough for safe mutation. Local inference is now separated from the raw
+model daemon by an authenticated loopback gateway. The gateway permits a small,
+size-bounded generation contract for an allowlisted model and rejects model
+management and other administration routes. A hosted provider may be used as a
+similarly bounded fallback.
+
+Mutation remains an owner action. A future local coordinator should not gain
+mutation until tool reliability, account isolation, credentials, egress, and
+command policy have all been reviewed.
+
+## Owner feedback and music iteration
+
+Music recipes are structured prompt pools with explicit versions. Schedulers
+select only from the current version for a lane; changing a version resets its
+rotation cursor instead of mixing old and new recipe state. A new version
+generates candidates only, leaving the approved manifest unchanged until review
+and technical QA complete.
+
+Private preview generation copies the exact candidate through a no-symlink,
+digest-checked boundary before transcoding. Owner feedback is appended to a
+bounded ledger with the SHA-256 identity of the asset being rated. The submitted
+digest must still match the expected candidate or current track, so delayed UI
+or bot actions cannot attach a rating to a replacement asset. Feedback can guide
+the next prompt version but cannot approve a file by itself.
 
 ## Public ingress
 
@@ -255,6 +291,21 @@ frozen environments. A complete change gate should include:
 
 Runtime services do not resolve or install dependencies while the station is on
 air.
+
+CI runs the same frozen dependency, test, lint, naming, secret, vulnerability,
+exception-expiry, and deterministic SBOM checks used locally. The runner uses a
+dedicated unprivileged identity without production secrets, and protected-branch
+status requires the reviewed quality/security job rather than trusting an
+unrelated successful workflow.
+
+## Remaining privileged controls
+
+Some boundaries cannot be completed by application code or an LLM. Host
+firewall changes, service-account creation, egress restriction, deployment-key
+scope, runner installation, legacy-secret retirement, and final storage-link
+retirement require an authenticated owner or platform administrator. The
+project documents and verifies their intended state, but does not bypass the
+operating system's privilege boundary to apply them automatically.
 
 ## Sources of truth
 

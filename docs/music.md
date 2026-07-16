@@ -16,7 +16,7 @@ lane recipe -> typed queue job -> authenticated ACE-Step -> candidate audio
                                                    playout
 ```
 
-## 1. The generation recipe
+## 1. Versioned generation recipes
 
 Each show or flow pool owns a lane recipe containing:
 
@@ -24,7 +24,8 @@ Each show or flow pool owns a lane recipe containing:
 - optional fictional lyrics or an explicit instrumental marker;
 - a coarse genre tag for scheduler spacing;
 - fictional artist and title pools;
-- model parameters recorded in metadata.
+- model parameters recorded in metadata;
+- an explicit recipe version and stable prompt ID.
 
 The production generators pin their effective recipe rather than inheriting
 client defaults. A typical ACE-Step profile uses strong caption guidance,
@@ -33,6 +34,11 @@ output, and a requested duration suited to the station pool.
 
 Exact settings are part of the candidate sidecar so a result can be reproduced
 or compared later.
+
+Schedulers select only prompts belonging to the current version for each lane.
+When a version changes, its rotation cursor resets rather than mixing state from
+the previous pool. This makes it possible to compare one coherent recipe
+revision at a time.
 
 ## 2. Positive-only captions
 
@@ -158,10 +164,10 @@ Generation success never sets live eligibility by itself.
 
 ## 9. Review policy and technical QA
 
-Flagship music has an explicit owner taste-review path for candidates. Some
-bounded flow refreshers can assign approval automatically under their configured
-lane policy. In that automatic path, `approved` means policy-accepted, not that a
-human listened to that individual track.
+Flagship music has an explicit owner taste-review path for candidates. A new or
+changed prompt version on a flow station is also candidate-only: generation does
+not increase the approved pool or inherit the previous version's acceptance.
+Promotion requires the configured owner review and current technical QA.
 
 Manual review is appropriate for a new lane, changed recipe, suspicious result,
 vocal material, or any rights/provenance concern.
@@ -180,7 +186,24 @@ invalidates the pass.
 Only policy-approved, technically current files can enter the atomic manifest.
 The model and read-only operator have no approval capability.
 
-## 10. Rotation and backfill
+## 10. Candidate preview and owner feedback
+
+Private previews are derived from the exact candidate through a contained,
+no-symlink copy. The copy's digest must match the source before a bounded
+transcode can begin. Preview filenames and metadata are display values, not path
+authority.
+
+An owner rating is accepted only with the SHA-256 digest of the asset that was
+actually reviewed. The feedback tool verifies that the candidate or current
+track still has that identity, then appends a bounded record to a private
+append-only ledger. It refuses writes once the ledger reaches its configured
+size ceiling.
+
+Models may receive an aggregate of this history when drafting the next prompt
+version. They cannot create owner ratings, alter earlier events, approve the
+track, or directly replace the live prompt pool.
+
+## 11. Rotation and backfill
 
 The flagship selector combines rotation gap, artist/genre spacing, and lane
 containment. Flow stations rotate approved pool manifests according to their
@@ -196,7 +219,7 @@ single-flight, and probabilistic. The safe pattern is:
 5. observe the next normal playlist/schedule refresh;
 6. retire older material only after the replacement stock is live.
 
-## 11. Storage and retention
+## 12. Storage and retention
 
 Generated music belongs in a configurable external media root. During migration,
 a compatibility link may keep older consumers working, but containment must be

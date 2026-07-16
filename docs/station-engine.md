@@ -74,6 +74,17 @@ Continuity uses a separate pool. The Signalman can mark an hour boundary on the
 flagship, while flow-station continuity is woven more sparsely through a watched
 manifest. The C'est and Yacht voices do not share the flagship DJ pool.
 
+Separate pools do not mean separate timing authority. Presenter links,
+continuity, and bulletins feed one speech arbiter per station. After any voice
+item is selected, the arbiter requires one complete music event before another
+voice item becomes eligible. If an hour marker collides with a DJ link or
+bulletin, one wins under deterministic policy and the others defer or become
+music.
+
+This invariant is validated in the published schedule and enforced again at
+playout boundaries. It prevents back-to-back voices even if a producer or model
+creates an unusually dense candidate pool.
+
 ## 4. Choosing music
 
 The flagship selector tries to satisfy three rules at once:
@@ -144,11 +155,12 @@ Each station emits one continuous MP3:
 
 1. playlist or flow source;
 2. optional track-sensitive bulletin/continuity fallback;
-3. slow loudness normalization with bounded gain;
-4. limiter;
-5. safe fallback source;
-6. MP3 encoder;
-7. Icecast output.
+3. speech-aware transition handling that preserves padded voice tails;
+4. slow loudness normalization with bounded gain;
+5. limiter;
+6. safe fallback source;
+7. MP3 encoder;
+8. Icecast output.
 
 A continuous MP3 avoids the timestamp discontinuities and browser compatibility
 problems of per-track chained streams.
@@ -194,6 +206,9 @@ and LLM tools read this computed state rather than launching their own probes.
 
 - Missing talk falls back to music.
 - Missing bulletin falls through to the underlying station.
+- Colliding speech requests select one item and defer or drop the rest.
+- A padding or speech-boundary validation failure makes the candidate
+  ineligible.
 - A failed manifest build leaves the previous manifest untouched.
 - A malformed state write is rejected before publication.
 - A dead playout affects one mount, not all five.
