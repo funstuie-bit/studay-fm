@@ -1,8 +1,21 @@
-# The Presenters
+# The presenters
 
-Every voice on Studay FM is an AI: a distinct voice of its own, driven by a written persona, with its own music and its own place on the clock. The personas are drawn from radio history and reshaped into characters that can carry a show indefinitely, because an LLM writes them fresh, in voice, every hour.
+Studay FM's presenters are fictional radio characters. Each has a character
+brief, speaking style, music lane, schedule, artwork, and a private
+reference-conditioned voice.
 
-Each host has: **its own voice** (a consistent voice held from a short reference clip), a **character brief** that the scriptwriter follows, a **music lane** tuned to their show, a **slot** on the schedule, and **artwork**.
+The production voice process accepted one adaptation per role rather than
+iteratively tuning for likeness to a named inspiration. Later pitch, EQ, timing,
+compression, and loudness processing shaped distinct station characters. In the
+news workflow, that processing moved the result farther from its inspiration.
+Historical filenames or implementation comments do not establish soundalike
+intent.
+
+Creative intent and source rights are separate questions. Any deployment using
+reference audio should maintain a private provenance ledger recording source,
+permission or licence basis, restrictions, derived files, active roles, review
+date, and withdrawal procedure. Raw references do not belong in this public
+repository.
 
 | | | |
 |:---:|:---:|:---:|
@@ -17,71 +30,101 @@ Each host has: **its own voice** (a consistent voice held from a short reference
 | ![The Neighbour](images/the_neighbour.webp) | ![The Signalman](images/the_signalman.webp) | ![The Captain](images/the_captain.webp) |
 | **The Neighbour** | **The Signalman** | **The Captain** |
 
-## The daily clock (Studay FM)
+## The weekday clock
 
-| Time (Pacific) | Show | Host | In the spirit of |
+| Time | Show | Host | Character |
 |---|---|---|---|
-| 06:00-10:00 | First Cup | **The Duke** | the warm breakfast broadcaster |
-| 10:00-14:00 | Big City Lunch | **Downtown** | big-city, big-hair midday pop |
-| 14:00-18:00 | Drive Time Is Survive Time | **The Instigator** | provocative drive-time shock-jock |
-| 18:00-22:00 | The Listening Room | **The Archivist** | the late-night crate-digging tastemaker |
-| 22:00-02:00 | The Long Way Home | **The Rambler** | the gentle, knowledgeable music-sharer |
-| 02:00-06:00 | The Graveyard Shift | **Offshore Ghost** | calm, dry, deadpan small-hours strangeness |
+| 06:00-10:00 | First Cup | **The Duke** | Warm breakfast company |
+| 10:00-14:00 | Big City Lunch | **Downtown** | Confident club-pop energy |
+| 14:00-18:00 | Drive Time Is Survive Time | **The Instigator** | Fast, provocative, socially observant |
+| 18:00-22:00 | The Listening Room | **The Archivist** | Curious crate-digger |
+| 22:00-02:00 | The Long Way Home | **The Rambler** | Unhurried music storyteller |
+| 02:00-06:00 | The Graveyard Shift | **Offshore Ghost** | Calm, dry small-hours presence |
 
-**The Duke** opens the day as warm radio company: loves songs, mornings and listeners, and notices the whole morning rather than defaulting to coffee.
+**The Duke** opens the day as warm radio company. The character notices the whole
+morning rather than relying on one repeated breakfast cliché.
 
-**Downtown** runs the middle of the day on pure confidence: club-pop, electro-funk and disco, people-watching, outfits, and somebody dancing when they think nobody's looking.
+**Downtown** carries the middle of the day with club-pop, electro-funk, disco,
+people-watching, clothes, and motion.
 
-**The Instigator** causes trouble at drive time: fast, wry, socially observant, amused by status games and bad etiquette. Provocative, never cruel.
+**The Instigator** brings quick drive-time energy. The character can be
+provocative, but the script rules reject cruelty, harassment, and off-brief
+material.
 
-**The Archivist** gets strange in the evening: a fan first and a presenter second, slightly surprised by his own discoveries, championing odd, rare, fictional records as if he just found them in a box.
+**The Archivist** champions odd and fictional records as discoveries rather than
+lecturing the listener.
 
-**The Rambler** tells stories late at night about musicians, sessions, songwriting and the people around the records. Warm, unhurried, the friend who shares music rather than lectures about it.
+**The Rambler** shares stories about sessions, songwriting, and the people around
+records in a warm, unhurried register.
 
-**Offshore Ghost** holds the small hours with calm, slow, deadpan observations: untroubled, faintly strange, never horror. The signal that doesn't sleep.
+**Offshore Ghost** holds the small hours with restrained, faintly strange
+observations. It is not a horror character.
 
-## The weekend crew (Studay FM, Saturday and Sunday)
+## The weekend crew
 
-At the weekend a different cast takes over the daytime. The weekday hosts step aside; Offshore Ghost still holds the overnight, and The Crate's *Without Borders* keeps a weekend slot among them.
+The weekend daytime schedule replaces the weekday hosts. Overnight continuity
+and selected specials remain in their own windows.
 
-| Time (Pacific) | Show | Host | In the spirit of |
+| Time | Show | Host | Character |
 |---|---|---|---|
-| Sat & Sun 06:00-11:00 | The Slow Start | **The Early Bird** | the unhurried weekend-breakfast host |
-| Sat 11:00-16:00 | The Long Player | **The Dust Jacket** | the erudite album-sides record obsessive |
-| Sat 16:00-19:00 · Sun 16:00-21:00 | Golden Hour | **The Resident** | the smooth club selector who kept the glamour |
-| Sat 21:00-02:00 | After Hours | **The Neighbour** | the late-night house-party host |
-| Sun 21:00-24:00 | Sunday Service | **The Neighbour** | the gentle close of the weekend |
+| Sat & Sun 06:00-11:00 | The Slow Start | **The Early Bird** | Unhurried weekend breakfast |
+| Sat 11:00-16:00 | The Long Player | **The Dust Jacket** | Album-side and liner-note enthusiast |
+| Sat 16:00-19:00, Sun 16:00-21:00 | Golden Hour | **The Resident** | Soul and R&B selector |
+| Sat 21:00-02:00 | After Hours | **The Neighbour** | Late-night house party |
+| Sun 21:00-24:00 | Sunday Service | **The Neighbour** | Gentle weekend close |
 
-**The Early Bird** eases the weekend awake: coffee, vinyl, an open window, and ambient, folk, soul and downtempo for the slow hours before the plans arrive. No hype, no rush.
+**The Early Bird** eases the weekend awake with ambient, folk, soul, and
+downtempo.
 
-**The Dust Jacket** plays Saturday like a great record collection heard in sequence: album sides over singles, the b-side that outshone the a-side, and the liner-note detail that changes how you hear it. Erudite and dry, never a lecturer.
+**The Dust Jacket** favors album sequence, deep cuts, and details that change how
+a record is heard.
 
-**The Resident** brings the golden hour: vocal-led soul and R&B, from classic and modern soul through quiet storm and neo-soul with a little boogie for the floor, from a selector who used to work the clubs and kept the glamour without the four-in-the-morning finish.
+**The Resident** brings vocal soul, R&B, quiet storm, neo-soul, and boogie to the
+golden hour.
 
-**The Neighbour** runs the weekend nights. Saturday is After Hours, the kitchen party with the good speakers on, house and nu-disco into the small hours. Sunday is Sunday Service, mellow soul and downtempo that readies you for Monday without a trace of dread.
+**The Neighbour** runs both sides of the weekend night: house and nu-disco on
+Saturday, then mellow soul and downtempo on Sunday.
 
 ## Weekly specials
 
-These take over their slots on the right days, displacing the regular show.
+- **The Detour**, *Friday Evening Sessions*: punk, post-punk, garage, indie, and
+  the long route home.
+- **The Crate**, *Without Borders*: spiritual jazz, afrobeat, desert blues,
+  broken beat, dub, and soul, described through people and records rather than a
+  catch-all genre label.
+- **The Philosophizer**, *Talk Radio For Thinking People*: a bombastic fictional
+  monologue host whose argument repeatedly lands somewhere more reasonable than
+  intended. The joke depends on structure, not abuse.
 
-- **The Detour**, *Friday Evening Sessions, Fridays.* A relaxed, well-travelled storyteller in the outlook of a great food-and-places writer (never his voice): dive bars, tiny venues, two-dollar demo tapes, bands that started in a garage knowing three chords. Punk, post-punk, garage, indie and Celtic punk. The records get louder, the rules get looser, and we take the long way home.
-
-- **The Crate**, *Without Borders, weekends.* A lifelong record collector who happens to have a radio show, in the philosophy of the great global-music broadcasters. Spiritual jazz, afrobeat, desert blues, broken beat, dub, soul and everything in between. Never says "world music"; every story is about people and records, never countries. Saturday loose and adventurous, Sunday slow and reflective.
-
-- **The Philosophizer**, *Talk Radio For Thinking People, weeknights.* A loud, bombastic talk-radio blowhard in the spirit of a certain over-confident gym owner. Every monologue opens like an angry rant and then, following his own logic and naked self-interest, lands on a wildly reasonable, compassionate conclusion he never notices reaching. The listener always does. Mostly talk, with arena rock between rants.
+Specials are first-class schedule windows. They displace a regular show rather
+than being layered ambiguously on top of it.
 
 ## Continuity and the other dials
 
-- **The Signalman**, the station's 24/7 continuity intelligence. Not a DJ: a calm, precise, quietly omnipresent voice that threads between every show, marks the hours, and keeps a public **operator diary** reflecting on the station's inner life. If Studay FM has a heartbeat, the Signalman keeps it in rhythm.
+- **The Signalman** is Studay FM's continuity voice and diary character. It marks
+  transitions and summarizes real station state; it does not control services.
+- **The Captain** hosts Yacht Zone with sparse links around its day/night music
+  change.
+- **Airelle** carries C'est Magnifistu between tracks without turning the flow
+  station into a full talk format.
+- **The Newsreader** presents a short music-and-culture bulletin built from
+  bounded live feeds. Every approved story is traceable to retained source
+  metadata and its outlet is attributed in the spoken script.
+- **StuLoFiDay** and **Tokyo Jazz** are primarily continuous music stations.
 
-- **The Captain**, host of **Yacht Zone**. A relaxed, suave yacht-rock skipper cruising at sunset speed, smooth and easygoing, with a whole world to talk about: the crew, the harbour, the boat herself, the records and the long open water after dark.
+## Writing and approval
 
-- **Airelle**, the continuity host of **C'est Magnifistu**, the European-flavoured eclectic flow station. A warm, unhurried voice that carries the mood between tracks rather than announcing over them.
+Character briefs specify identity, tone, subjects, segment types, forbidden
+language, word ranges, and handoffs. Model output is validated and stored as a
+candidate. It is rendered, technically checked, accepted by the configured fixed
+review policy, and included in an approved manifest before it can air. Recurring
+speech can be approved automatically after those validators pass; the model
+itself has no approval capability.
 
-- **The Newsreader**, on C'est Magnifistu, an hourly **music-and-culture news bulletin** read in the measured cadence of a classic evening-news anchor, written by the LLM from live feeds. Music and culture only, no repeats: the station reports what is actually happening in the world it lives in.
+The private operations model does not write or approve presenter material by
+issuing shell commands. Scheduled producers and trusted owner workflows invoke
+fixed pipeline entry points; the operator and ops bot can only inspect bounded
+station state.
 
-StuLoFiDay and Tokyo Jazz run continuously with no host, just the mood.
-
----
-
-*Personas and voices are original characters inspired by archetypes from radio history. Any resemblance to real broadcasters is affectionate homage, not impersonation.*
+Fictional characters are not affiliated with or endorsed by any real person who
+may have informed a broad creative reference.

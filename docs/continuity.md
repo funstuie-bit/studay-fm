@@ -1,112 +1,176 @@
 # Deep dive: continuity and the diary
 
-Threading the whole network together is a single continuity voice that is not a DJ. It
-marks the hours on air, carries the mood between tracks on the flow stations, and
-writes a short public diary about the state of the station. It is calm, precise, and
-deliberately spare.
+Continuity gives the network a voice between shows without giving that voice
+operational authority. The Signalman marks flagship transitions and writes a
+grounded public diary; Airelle provides sparse links on C'est Magnifistu.
 
-## 1. The continuity voice
+```text
+real station state -> bounded writing call or deterministic fallback
+                                      |
+                              candidate text
+                                      |
+                          speech render and QA
+                                      |
+                     fixed approval policy + manifest
+                                      |
+                                   playout
 
-A station-owned voice distinct from the host roster: a low-energy, public-information
-register (calm, measured, quietly authoritative, only occasionally dryly amusing). It
-never talks about itself and never does a "show". Its lines are short and factual, and
-it plays two roles: an on-air ident between programmes, and the author of the public
-diary.
-
-The on-air register is enforced hard in its prompt: spoken words only, `5 to 15` words
-(never more than `25`), short factual sentences, and an explicit "inform, do not tell a
-story, review music, give an opinion, or react emotionally". It even ships an allowed
-vocabulary (`station, programme, broadcast, signal, hour, next, shortly, continues`)
-and a forbidden one (`amazing, incredible, emotional, beautiful, story, dreams,
-philosophy, poetry`).
-
-## 2. On-air idents at the hour boundary
-
-Continuity clips live in their **own pool**, separate from per-show talk. The schedule
-builder collects every approved continuity clip into one list, shuffles it once with
-the build seed (a stable round-robin), and inserts one at the first event that crosses
-into a new clock hour:
-
-```
-if hour_key != last_hour and continuity_pool:
-    pick = continuity_pool[index % len(continuity_pool)]; index += 1
-    kind = "signalman"        # tagged distinctly from "talk" and "music"
-    last_hour = hour_key
+real station state -> diary entry -> append-only ledger -> atomic public feed
 ```
 
-So **at most one ident per clock hour**, chosen round-robin, and empty-safe (the
-`and continuity_pool` guard means an empty pool simply falls through to normal
-cadence). This is a different mechanism from DJ talk, which is inserted by a per-show
-song-count cadence with its own no-repeat rule (see
-[the station engine](station-engine.md)).
+## 1. Continuity is not the operator
 
-## 3. Producing continuity clips
+The Signalman is a fictional continuity character. It can describe the station
+and appear between programmes, but it cannot restart a service, approve media,
+enqueue work, or change the schedule.
 
-The lines are written by the LLM and rendered in the continuity voice through the same
-pipeline as DJ talk (see [Voices](voices.md) and [the talk pipeline](talk-pipeline.md)):
-low exaggeration for a calm delivery, loudness-normalized with lead and tail padding
-(no silence-trim), rejected if there is more than about `4 s` of internal silence, and
-promoted to `approved` before it can air. Approved clips land in a continuity pool with
-a sidecar tagged `role: "continuity"`. The generator is idempotent: on a re-run it
-reads existing lines and only renders what is missing.
+The private operational model is separate. It receives a typed read-only station
+query and can only observe and recommend.
 
-## 4. The flow-station continuity host
+Keeping these roles separate prevents public-facing character text from becoming
+an administration channel.
 
-The genre-free flow stations carry a **sparser** continuity voice woven between tracks
-rather than a scheduled ident. Its lines are short, station-safe sentences bucketed by
-kind (`ident`, `eclectic`, `moment`), each rendered and QA'd the same way. Rather than a
-fixed bank, they are **refreshed daily**: a scheduled pass writes new lines in the
-continuity voice with the LLM, renders and approves them, and rotates the oldest beyond a
-cap into a retired folder, with a freshness check watching the pool. (An early build
-shipped a static bank and looped the same handful of lines for days before this was added,
-the same depth-is-not-freshness lesson as the talk pools.) They are woven in with a
-weighted rotation over an empty-safe fallback:
+## 2. Flagship hour markers
 
+Flagship continuity lives in its own approved pool. The scheduler inserts a
+short marker at an hour boundary when an eligible clip is available.
+
+The selection is:
+
+- bounded and rotation-aware;
+- independent of per-show DJ cadence;
+- subject to the shared station speech arbiter;
+- empty-safe, falling through to music or the next scheduled event;
+- validated as part of the schedule before publication.
+
+An hour marker does not outrank the station's audio boundary. If a bulletin or
+presenter link has just played, the marker defers until a full music track has
+completed or is skipped under the fixed policy. This prevents an hourly event
+from creating a voice-on-voice collision.
+
+The script brief keeps the Signalman factual and sparse: short sentences,
+restricted vocabulary, no grand storytelling, and no invented claims about the
+station.
+
+## 3. C'est flow continuity
+
+Airelle's continuity is woven between tracks rather than placed on a flagship
+clock. Lines are grouped by function, such as ident, mood, or moment, and
+published through a separate approved manifest.
+
+Liquidsoap uses a weighted, track-sensitive fallback. Roughly:
+
+```text
+continuity_or_music = fallback(track_sensitive=true, [continuity, music])
+radio = rotate(weights=[music-heavy, continuity-sparse],
+               [music, continuity_or_music])
 ```
-continuity = fallback(track_sensitive=true, [ playlist(watch, continuity_dir), music ])
-radio      = rotate(weights=[10, 1], [ radio, continuity ])
-```
 
-That is roughly **one continuity slot per ten tracks**, and if no clip is ready the
-inner fallback yields another track instead of stalling. The continuity directory is a
-watched playlist, so newly approved lines air without a restart.
+If no approved line is ready, the fallback supplies music. Newly published
+continuity becomes visible through the watched manifest without restarting the
+station.
 
-## 5. The public diary
+## 4. Writing continuity
 
-On a schedule (about every `30 min`) the LLM writes a short reflective note on the
-station's inner life, in the continuity voice.
+The writing call is bounded and provider-agnostic. The current hosted fallback
+does not gain tools merely because it writes a line.
 
-- **Grounded in real state only.** Before writing, it gathers the current and next
-  show, the current track and artist, stream up/down and listener count from the local
-  streaming-server status, the approved music library depth, the catalogue size, a pass
-  counter, and the **last several diary entries with an explicit instruction not to
-  repeat their wording or focus**.
-- **Register**: first person, calm, spare, warm but observant, two short paragraphs.
-  The hard guardrail: ground everything in the given facts, **never invent listener
-  numbers, songs, hosts, or events**. No em dashes.
-- **Output contract**: the model must return compact JSON `{ mode, title, text }`, where
-  `mode` is one of `maintenance` / `continuity` / `responsive` / `special` and `title`
-  is at most seven words. A self-hosted model path enforces this with a response JSON
-  schema (malformed output is structurally impossible); a hosted provider is the
-  alternative, selected per task so the diary's model routing is independent of the
-  rest.
-- **Never goes dark**: if the model is unavailable, a deterministic note is composed
-  purely from the facts (current host and track, next handoff, stream state), so the log
-  always has an entry. Each entry records a `writer` field (deterministic or the model
-  used) so "reads right" can be told apart from "came from where you think".
+The prompt enforces:
 
-## 6. Storage and publishing
+- spoken text only;
+- short word range;
+- factual station-safe language;
+- no claims about listener counts or events unless supplied as facts;
+- no stage directions or Markdown;
+- no em dashes;
+- no unsupported station pronunciation.
 
-Entries are appended to a shared **append-only ledger** as `diary_entry` events. Writes
-are idempotent: the entry id is derived from the station plus the 30-minute time bucket,
-so a re-run inside the same window is skipped and the ledger refuses duplicate ids. A
-separate publisher reads the ledger, sorts newest first, and writes two artifacts for
-the site: a static diary page and the **diary JSON the SPA reads** (see [the site](site.md)).
-A house-style pass strips any dashes at write time and again at publish time.
+A deterministic line is available if the model is unavailable. Either result is
+still a candidate.
 
-## 7. Guardrails
+## 5. Render, review, and manifest
 
-- **No em dashes anywhere**, enforced in the prompt, at write time, and at publish time.
-- **Facts only** in the diary; no invented numbers, songs, hosts, or events.
-- **Human taste gate**: on-air continuity, like all talk, only airs once its sidecar is
-  `approved`. The automation tracks counts and render success, never judges quality.
+Continuity uses the same speech safety chain as presenter talk:
+
+1. private, path-confined reference-conditioned render;
+2. loudness normalization and lead/tail padding;
+3. silence, duration, format, channel, sample-rate, loudness, and peak checks;
+4. the configured fixed approval policy;
+5. technical-QA cache tied to the exact file;
+6. atomic approved-manifest publication.
+
+No sidecar-only edit can put a line on air.
+
+The padded terminal margin remains part of the approved asset, and speech-aware
+playout does not crossfade it away at the next transition.
+
+## 6. The public diary
+
+The diary is a short reflective summary grounded in real state. A writing pass
+can receive:
+
+- current and next flagship show;
+- current audible track and artist;
+- stream/readiness summary;
+- approved library and catalogue counts;
+- recent diary entries, with an instruction not to repeat them.
+
+The model returns a small structured object containing mode, short title, and
+text. The writer rejects malformed output and strips forbidden punctuation.
+
+If no model is available, a deterministic entry is composed from the same facts.
+The entry records its writer/source so a reader can distinguish fallback from a
+model-generated note.
+
+The writer runs once per hour. Watchdog liveness allows up to 75 minutes between
+published entries so ordinary scheduler and generation jitter does not create a
+false outage. That age check answers only whether the diary is still advancing.
+
+Provenance quality is checked separately. Two consecutive entries attributed to
+the deterministic fallback raise an alarm even when both entries are fresh.
+This distinguishes a healthy hourly publishing loop from a model-writing path
+that has silently remained unavailable.
+
+## 7. Append-only ledger
+
+Diary entries are first appended to a private event ledger. Entry IDs are
+derived from station and time bucket, making repeated runs idempotent.
+
+A publisher:
+
+1. reads and validates ledger entries;
+2. sorts the public view;
+3. writes the diary feed atomically;
+4. validates station ID, timestamp, count, and entry list before replacement.
+
+The public site receives only the intended diary fields. It does not receive
+private health details, paths, prompts, or logs.
+
+## 8. Freshness and retention
+
+Continuity depth and freshness are separate checks. The watchdog can flag:
+
+- too few approved lines;
+- newest approved line too old;
+- producer heartbeat stale;
+- manifest stale or technically ineligible;
+- diary feed older than its 75-minute liveness allowance;
+- two consecutive diary entries carrying fallback provenance.
+
+Retirement moves old approved lines out of watched directories only after they
+are no longer scheduled or on air. The scheduled retention audit excludes
+continuity and private references entirely.
+
+## 9. Failure behavior
+
+- Missing continuity becomes normal music.
+- A colliding hour marker defers or becomes music rather than stacking voices.
+- Model failure uses a deterministic candidate or skips the cycle.
+- Render/QA failure creates no manifest entry.
+- Malformed diary output is rejected before publication.
+- A failed public-feed write leaves the prior complete JSON in place.
+- A red or stale watchdog state is visible to the typed operations query, not
+  hidden by a cheerful continuity line.
+
+Continuity makes the station coherent; it does not make the character an
+autonomous controller.

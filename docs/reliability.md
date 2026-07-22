@@ -1,126 +1,269 @@
-# Deep dive: reliability (the watchdog and always-on)
+# Deep dive: reliability and readiness
 
-A 24/7 broadcast is mostly the unglamorous work of staying up. Three things carry it: a
-health watchdog that catches faults the moment they happen, an always-on service model
-that restarts every component automatically, and a set of hard-won lessons, each one the
-scar of a past outage.
+A 24/7 radio network needs independent supervision, contracted state, and
+failure-safe fallbacks more than it needs an all-powerful agent. Studay FM uses a
+one-shot watchdog, atomic readiness, per-component services, a crash-aware queue,
+and typed read-only operations.
 
-## 1. The watchdog
+## 1. Watchdog model
 
-A stateless job runs **every 15 minutes**: it computes every check, diffs the results
-against the previous run's state, emits an event for anything that flipped, rewrites a
-state file, regenerates a status page, and exits. Every check exists because of a real
-incident, this is failure-driven monitoring, not a generic template.
+The watchdog runs on a schedule, computes a bounded snapshot, compares check
+booleans with the previous pass, writes state and readiness atomically, emits
+transition events, and exits.
 
-### The checks
+It does not restart services during the health pass. Diagnosis and mutation stay
+separate.
 
-- **Stream reachability**: each per-station mount must return `200` locally; the public
-  URL must return `200` through the edge (catches tunnel breakage local checks miss); and
-  the streaming server's connected-source count must equal the expected number of
-  stations (catches an encoder that is alive but whose source silently dropped, a station
-  dead while looking up).
-- **Tunnel integrity**: exactly **one** connector is registered (more than one is
-  split-brain, see [Serving](serving.md)). Exactly one is law.
-- **Stream advancing**: each station's now-playing state file must have changed in the
-  last `~20 min`; a frozen file means playout has stalled.
-- **Site data freshness**: the now-playing feed is `< 5 min` old (published every few
-  seconds), the schedule feed `< 15 min` old.
-- **Content heartbeats**: the newest diary entry is `< 50 min` old, the hourly news loop
-  shows recent activity, real feed supply has not been dry for more than a couple of
-  hours, and no render/QA errors in the last runs.
-- **Generation queue**: the dead-letter directory is empty (a dead-lettered job is one
-  that exhausted its retries).
-- **Talk stocking and freshness**: the stocking loop is running, and each show's approved
-  talk pool is at or above the floor (`>= 15`). Because depth is not freshness, two further
-  checks measure the **age of each show's newest approved clip** (red if a show has had
-  nothing new in a day or two) and the **freshness generator's heartbeat** (red if the
-  daily refresh has not run). See [the talk pipeline](talk-pipeline.md).
-- **Music freshness (continuous stations)**: the same depth-and-freshness idea applied to
-  the self-refreshing music pools, each pool must be at or above a depth floor **and**
-  have a track newer than a set age, so a station whose daily music refresh has quietly
-  stopped goes red instead of looping a stale library while its floor still reads green.
-  One aired dir that plays a raw folder is watched directly rather than through its
-  generator, because a fresh generator is no proof the stream is hearing it.
-- **Host**: root filesystem usage is `< 90%`.
+This one-shot design avoids a resident monitor becoming another fragile daemon.
+The scheduler can restart a failed pass, while stale readiness makes the station
+fail closed.
 
-### Alerting
+## 2. Stream checks
 
-The watchdog alerts **only on state transitions**: an `ALERT` when a check goes green to
-red, a `resolved` when it goes red to green. A standing problem is never re-alerted and a
-still-green check is silent, so the log is one-to-one with real changes. Transitions are
-appended to an **append-only JSONL alerts log** and, if a webhook is configured, pushed
-to a chat channel (best-effort, a failed push never blocks the pass).
+The stream layer verifies:
 
-### The status page and state file
+- Icecast responds on loopback;
+- exactly five expected sources are connected;
+- each mount is represented;
+- public routing works independently of local routing;
+- per-station now-playing advances;
+- the playout service definition matches the intended station.
 
-Each pass rewrites a `noindex` red/green status page (every check with OK/FAIL and
-detail, plus the recent alerts, self-refreshing). It also maintains a **state file**
-mapping each check to `{ ok, detail, at }`. That file is the source of truth for "what is
-red right now", and other components read it rather than re-probing: the maintenance
-loop's brief pulls the failing checks straight from it (see
-[the talk pipeline](talk-pipeline.md)). The pattern is **compute health once, everyone
-else reads the state**.
+An alive process is not enough. A Liquidsoap encoder can exist while its Icecast
+source is disconnected, and a public tunnel can fail while every local request
+is green.
 
-## 2. The always-on model
+## 3. Decoder latency alerts
 
-Every long-lived component runs as **its own user-level service** with the same
-supervision pattern:
+A decoder alert can report JSON decode failures and latency catch-ups for the
+current session.
 
-- **Start at boot** (`RunAtLoad`).
-- **Restart on crash** (`KeepAlive`).
-- **A throttle interval** (minimum seconds between restarts) so a crash-loop cannot
-  hot-spin, roughly `10 s` for fast core services, `15 to 30 s` for supporting loops, and
-  longer for the heavy generation worker.
-- **Priority by workload**: real-time audio (the streaming server, every station's
-  encoder, the scheduler) runs at **interactive** priority; non-realtime helpers (the
-  data publisher, the stocking daemon, the queue worker, the watchdog) run in the
-  **background**. This split matters (see the lessons).
+One catch-up with zero decode failures is a warning to inspect:
 
-Components run this way: the streaming server, one playout/encoder per station, the
-scheduler, the site server, the tunnel connector, the now-playing/diary publisher, the
-maintenance loop, and the watchdog itself (interval-driven rather than kept alive, since
-each pass is short). Startup ordering is handled inside each service command (for
-example the stream service waits for the streaming server to answer before starting), so
-restart races self-heal. The single GPU generation worker guards itself with an OS lock
-so an auto-restart can never race two workers onto one card. Some periodic jobs (the
-hourly news bulletin) are calendar one-shots, not kept-alive daemons.
+1. read the computed health view;
+2. confirm the affected mount and metadata advance;
+3. tail the bounded station and watchdog logs;
+4. look for repetition, audio gaps, rising latency, or restarts.
 
-## 3. Hard-won lessons
+Do not restart a station on the strength of one isolated catch-up. Repeated
+events or audible degradation justify a targeted response.
 
-Each of these is a rule with a reason:
+## 4. State freshness and contracts
 
-- **Real-time audio must run at interactive priority.** Backgrounded, the encoders get
-  throttled and you hear cutouts. Stray heavy work (renders, a headless browser, batch
-  ffmpeg) on the streaming box starves the encoders. Keep heavy work off the box and the
-  audio path at interactive priority.
-- **Keep a fallback for every fancy backend.** Every generated slot degrades to plain
-  music through an empty-safe fallback, and every premium model has a validated cheaper
-  or local one behind it. A single flaky backend must never silence a host.
-- **Single-flight ML scales with nodes, not concurrency.** The generation models saturate
-  one accelerator and destabilize under parallel requests, so they are single-flight by
-  construction. To go faster, add machines, not threads.
-- **Quality-gate everything generated.** Music and talk are `candidate` until an automated
-  gate passes them to `approved`, and only approved assets air. Generation is
-  probabilistic; nothing reaches air unvetted.
-- **Put the model where the memory is.** Music generation runs on the model server, voice
-  rendering on the high-memory render box, and the streaming host only schedules,
-  encodes, and serves. Co-locating heavy generation with real-time streaming starves the
-  encoders.
-- **Do not wipe a library all at once; backfill first.** Regeneration is slow and
-  single-flight, so an idle-time top-up loop fills the thinnest lane incrementally rather
-  than wiping and regenerating. A live station cannot go thin mid-refresh; grow the pool
-  before draining anything.
-- **Restart supervised services cleanly.** A config change needs a clean stop and start
-  with a gap, not a racing reload, and renames must be boundary-aware (a careless global
-  substitution once corrupted source and caused an outage).
-- **Measure the work, not a threshold.** A check that a pool is above a floor, or a state
-  file is under an age limit, stays green as long as the number is in range, even when the
-  process that should be *doing the work* has quietly stopped. Two faults hid exactly this
-  way: talk pools sat above their floor while every clip was days old, and a now-playing
-  state file stayed under its staleness limit while skipping whole tracks. The fix is to
-  monitor freshness and last-ran heartbeats (is new work actually appearing?), not just
-  standing levels. A green dashboard should mean the work is happening, not merely that a
-  level is in bounds.
+The watchdog checks the public and private artifacts the system depends on:
 
-Together these are what turn a pile of models into something that is actually on the air
-at four in the morning.
+- per-station now-playing;
+- flagship schedule;
+- catalogue and diary;
+- producer heartbeats;
+- queue worker state and receipts;
+- approved-media manifests;
+- readiness itself.
+
+State writers validate payload shape and timestamps before durable atomic
+replacement. Readers reject malformed content. The readiness endpoint also
+rejects evidence older than its allowed age.
+
+The operating principle is: compute health once, then let the CLI, owner, and
+bounded model tools read the same result.
+
+## 5. Approved-media checks
+
+For each station, reliability includes content eligibility:
+
+- every manifest path is absolute, regular, contained, and non-symlinked;
+- the sidecar is approved;
+- technical QA is current for the exact file;
+- generated news has valid source provenance and editorial verification;
+- the manifest bytes match the current eligible set.
+
+A station with a stale manifest or an on-air asset lacking current technical
+evidence is red even if audio is still audible.
+
+## 6. Queue v2 checks
+
+Generation queue health includes:
+
+- at most one running record;
+- at most one active command child;
+- fresh worker and job lease heartbeats;
+- matching process identity, not PID alone;
+- valid v2 job schemas;
+- exit receipts consumed correctly;
+- dead-letter count;
+- no duplicate worker ownership.
+
+If a worker restarts while a child is alive, recovery waits for the existing
+supervisor. If the child is gone, the receipt or bounded retry policy decides the
+next state.
+
+## 7. Producer and freshness checks
+
+The watchdog measures both level and activity:
+
+- talk and continuity approved counts;
+- newest approved item age;
+- speech-tail padding and one-voice schedule invariants;
+- music pool depth and newest-track age;
+- scheduled producer heartbeat;
+- news feed supply, render attempts, and recent failures;
+- diary generation age and writer provenance.
+
+A full pool can still be stale. Measuring only the floor would miss a generator
+that stopped days ago.
+
+The diary demonstrates why cadence and provenance need separate checks. Its
+writer runs hourly, while liveness permits a 75-minute age to absorb normal
+scheduler and generation jitter. Independently, two consecutive
+deterministic-fallback entries raise a provenance alarm. A fresh feed can
+therefore remain live while correctly reporting that its preferred writing path
+has degraded.
+
+## 8. Host and network checks
+
+Host checks include:
+
+- filesystem capacity and free-space floor;
+- media growth over time;
+- log growth;
+- expected loopback listeners;
+- no unexpected wildcard listener for station services;
+- optional service listeners treated as optional, not silently assumed.
+
+Heavy generation belongs off the streaming host. Real-time audio processes need
+interactive priority, while scans and publishers can run as background work.
+
+## 9. Transition-only alerts
+
+The watchdog emits:
+
+- `ALERT` when a check moves green to red;
+- `resolved` when it moves red to green.
+
+Unchanged state is silent. Events go to an append-only private log and can be
+delivered to a private alert channel. Delivery failure does not block state
+publication.
+
+Transition-only behavior avoids alert fatigue while preserving a one-to-one
+record of changes.
+
+## 10. Readiness document
+
+Readiness is a small validated document:
+
+```json
+{
+  "schema": "studayfm.readiness.v1",
+  "ready": true,
+  "generated_at": "ISO-8601 timestamp",
+  "checks": {
+    "check-id": {
+      "ok": true,
+      "detail": "bounded human-readable detail"
+    }
+  }
+}
+```
+
+The flagship serves `200` only for fresh all-green evidence and `503` otherwise.
+Liveness remains a separate endpoint.
+
+## 11. Service supervision
+
+Each long-lived component has its own user service:
+
+- Icecast, Caddy, and tunnel connector;
+- five playout graphs;
+- site-data publisher;
+- queue worker;
+- authenticated inference-only model gateway and private bot gateway.
+
+Calendar jobs cover news, content top-ups, watchdog, approved-media refresh, and
+retention audit.
+
+A calendar job can be healthy with no current PID. Evaluate its schedule, last
+exit, heartbeat, log, and output time rather than assuming “not running” means
+failed.
+
+## 12. Read-only operations
+
+The canonical CLI offers typed observation commands and bounded allowlisted log
+tails. The scheduled operator and private ops bot receive the same
+`station_query` capability.
+
+They cannot:
+
+- run shell commands;
+- read arbitrary files;
+- enqueue or retry work;
+- generate or approve media;
+- restart services;
+- change configuration;
+- deploy code.
+
+Earlier local coordination was unreliable, so model access remains observational
+and read-only. A local model is reached through an authenticated loopback,
+inference-only gateway that allowlists its model and request shape while
+rejecting administration routes. A hosted provider can be a bounded fallback.
+Owner control is a reliability feature as well as a security feature.
+
+## 13. Isolated change gates
+
+Local and CI verification use the same frozen dependency graph and run:
+
+- the complete test suite and critical lint;
+- canonical naming and public/private-boundary checks;
+- current-tree and history secret scanning;
+- dependency vulnerability review with narrow expiring exceptions;
+- deterministic CycloneDX SBOM generation and comparison.
+
+The CI runner uses a dedicated unprivileged identity and receives no production
+secrets. Required status is attached to the exact quality/security job for the
+reviewed revision, not any coincidentally green workflow.
+
+Some controls stay outside CI because they require platform privilege: host
+firewalls, service identities, egress policy, deployment-key scope, system
+service installation, legacy-secret retirement, and final compatibility-link
+removal. These are documented owner operations with explicit verification and
+rollback, not tasks delegated to a model.
+
+## 14. Retention and storage
+
+Media lives in a configurable external root so Git operations and repository
+size do not govern the broadcast library.
+
+The weekly retention job is audit-only. It can report old experiment, reject,
+retired, and archive files while excluding runtime, approved, scheduled, on-air,
+bulletin, continuity, and private references. Quarantine is explicit,
+recoverable, and has no automatic deletion date.
+
+## 15. Failure drills
+
+Useful drills include:
+
+- one mount missing while the other four remain live;
+- local origin healthy but public route unavailable;
+- stale readiness with all processes alive;
+- queue worker restart during a long child job;
+- failed approved-manifest refresh preserving prior bytes;
+- invalid now-playing payload rejected before publication;
+- news feed/model/render failure falling back to music;
+- bulletin, hour marker, and DJ link colliding at one boundary;
+- a speech-tail change verified against a captured broadcast transition;
+- one isolated decoder catch-up versus repeated latency degradation.
+
+The objective is a bounded response to the smallest affected component, not a
+blanket restart.
+
+## 16. Hard-won rules
+
+- Real-time audio gets priority; heavy work goes elsewhere.
+- A model failure must not become dead air.
+- Internal APIs need authentication and limits.
+- Candidate media is never live media.
+- One complete music track separates voice items.
+- Owner feedback must identify the exact asset being rated.
+- State must be valid, atomic, and fresh.
+- Monitor new work, not only standing totals.
+- Restart one component only after evidence.
+- Never let a chat bot become the control plane by convenience.

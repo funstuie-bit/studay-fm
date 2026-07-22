@@ -1,16 +1,17 @@
 # Contributing
 
-Thanks for your interest. This repo is a public demo and build guide for a
-Studay-FM-style AI radio network: a one-command Docker demo you can run and then
-grow into your own station.
+Thanks for your interest. This is the public home of the Studay FM hobby radio
+project. It also contains the early one-command Docker demo while a generic
+build-your-own AI radio station is prepared as a separate repository.
 
 ## Ground rules
 
-**No cloned real-person voices.** Do not commit, or add config that ships, voice
-reference clips of real people (broadcasters, celebrities, anyone) without their
-explicit permission. Presenters here are defined by persona; voices are something
-each operator supplies for their own deployment. PRs that add such clips will be
-closed.
+**No unlicensed real-person references or impersonation assets.** Do not commit,
+or add config that ships, a real person's voice reference without explicit
+permission and a documented right to redistribute it. Presenters here are
+fictional personas; private reference-conditioned voices are something each
+operator supplies and reviews for their own deployment. PRs that add unsupported
+source clips will be closed.
 
 **Nothing private.** No secrets, API keys, passwords, private IP addresses, or
 absolute home paths. `scripts/scrub.sh` enforces this and runs in CI. Run it
@@ -25,7 +26,7 @@ script also fails on em and en dashes.
 
 ## Developing
 
-The whole thing is the Docker demo. To work on it:
+The runnable contribution surface is currently the Docker demo. To work on it:
 
 ```sh
 cp .env.example .env

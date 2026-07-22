@@ -1,137 +1,160 @@
-# Deep dive: writing the DJ scripts
+# Deep dive: writing DJ scripts
 
-Every word a host says is written fresh by an LLM, in that host's voice, against
-a per-character brief, and then either passes a validation gate or is rejected and
-rewritten. If no model is configured the same pipeline runs on built-in
-deterministic lines, so the whole system works with zero keys and zero spend.
+Each presenter has a static character brief. A bounded language-model call or a
+deterministic fallback produces a candidate script, and validators either accept
+the candidate for rendering or reject it with reasons.
 
+```text
+character brief -> bounded prompt -> LLM or deterministic fallback
+                                      |
+                                validate text
+                              pass / reject+retry
+                                      |
+                            candidate script sidecar
 ```
-character sheet ─►  prompt  ─►  LLM (OpenAI-compatible)  ─►  validate  ─►  candidate script (.json)
- (identity, tone,     (one       or deterministic lines      pass? store.        review_status
-  angles, forbidden,   flat        (fallback)                fail? feed reasons   = candidate
-  handoffs)            turn)                                  back, retry x3)
-```
 
-This page is the script layer. The voice that speaks these words is covered in
-[Voices](voices.md); how scripts get rendered and kept stocked is in
-[the talk pipeline](talk-pipeline.md).
+The script layer does not approve audio, control playout, or administer the
+station.
 
-## 1. The character sheet
+## 1. Character brief
 
-Each host is a static config entry. The fields are what turn a generic LLM into a
-consistent, on-voice presenter:
+A presenter configuration can include:
 
-| Field | What it does |
+| Field | Purpose |
 |---|---|
-| `identity` | One or two sentences: who they are, what they love, what they notice. |
-| `tone` | Energy rating, pace, sentence length, emotional register (e.g. "gentle, occasionally corny, never sarcastic"). |
-| `story_style` | Long-form/comedy hosts only: a paragraph describing the storytelling voice, and for a comedy monologue host the entire structural engine of the joke. |
-| `segments` | The break types this host can do (song intro, back-announce, hour marker, weather note, feature intro, rant, and so on). |
-| `angles` | A pool of concrete one-line story premises. One is chosen per break. |
-| `allowed` | Preferred vocabulary and subjects, injected as "allowed topics". |
-| `forbidden` | A denylist of topics and literal phrases. It both steers the prompt and is enforced as a hard rejection (below). |
-| `handoffs` | A few canned "into the music" closing lines. One is injected as the required sign-off and checked for. |
-| render knobs | Optional per-host `exaggeration` / `cfg_weight` for the voice render. |
+| `identity` | Who the fictional host is and what they notice |
+| `tone` | Energy, pace, sentence length, emotional register |
+| `story_style` | Long-form structure or comedy mechanism |
+| `segments` | Intro, back-announce, hour marker, feature, monologue, and so on |
+| `angles` | Concrete premises to rotate across |
+| `allowed` | Preferred topics and vocabulary |
+| `forbidden` | Topics and literal phrases that must be rejected |
+| `handoffs` | Approved clean endings into music |
+| render settings | Presenter-specific speech parameters |
 
-## 2. The prompt and the model
+The brief is versioned station configuration, not model memory. A stateless call
+can therefore be audited and reproduced.
 
-The generator speaks a **provider-agnostic OpenAI-compatible** chat API: set a
-base URL, key, and model in config and it runs against any hosted provider or a
-local model, unchanged. The prompt is **flat instruction text folded into a single
-user turn** (no separate system message): the character brief is injected inline
-(identity, tone, story style, the chosen segment type and angle, the allowed and
-forbidden lists, and one random handoff as the required close), followed by an
-explicit rules block. Typical settings: `temperature` around `0.9`, `max_tokens`
-around `1200`.
+## 2. Model boundary
 
-Illustrative rules block (standard break):
+Writing tasks use an OpenAI-compatible chat API. The configured endpoint can be
+local or hosted, but the call is still bounded:
 
+- endpoint and model identifier allowlists;
+- scoped credential available only to the writing process;
+- request, response, timeout, and token limits;
+- no redirects to arbitrary hosts;
+- no tool access;
+- no station mutation authority.
+
+The earlier local coordinator and local-model Hermes configuration were not
+reliable enough to run operational tools safely. The current private Hermes
+gateway uses DeepSeek within fixed workflows, while the separate operator
+surface remains read-only.
+
+Changing provider does not change these capability limits.
+
+## 3. Prompt construction
+
+The prompt contains:
+
+- fictional identity and tone;
+- chosen segment type and least-used angle;
+- allowed and forbidden topics;
+- target word range;
+- required handoff;
+- station pronunciation rule;
+- output-only-spoken-words rule;
+- no real-artist or real-song invention where the format requires fictional
+  catalogue references;
+- no em dashes or stage directions.
+
+Feed stories and other external text are not mixed into ordinary DJ prompts.
+The news workflow has its own untrusted-data boundary.
+
+## 4. Anti-staleness
+
+The generator scans existing non-rejected scripts and counts angle use. It
+chooses among the least-used angles, so never-used premises win before familiar
+ones.
+
+Freshness still needs operational monitoring. A large pool can remain full while
+its newest script becomes old. The watchdog therefore tracks both approved depth
+and newest approved age.
+
+## 5. Validation
+
+A candidate can be rejected for:
+
+1. word count outside the presenter's range;
+2. global stale or purple phrases;
+3. presenter-specific forbidden terms;
+4. missing or stacked handoffs;
+5. unbalanced quotes;
+6. incomplete final sentence;
+7. malformed station-name pronunciation;
+8. stage directions, Markdown, or labels;
+9. unsupported output shape.
+
+The generator can append bounded rejection reasons and retry a small fixed
+number of times. It does not loop indefinitely. A failed item is skipped so one
+bad completion cannot stop a batch.
+
+## 6. Deterministic fallback
+
+If no provider is configured, the endpoint is unavailable, or all bounded
+attempts fail, the producer can choose from built-in presenter lines.
+
+Fallback scripts are marked with their generation source. This keeps the public
+demo account-free and lets production degrade without inventing a successful
+model call.
+
+The fallback is not a bypass: it still becomes a candidate and follows the same
+render, review, technical QA, and manifest path.
+
+## 7. Writing for speech
+
+The script validator enforces renderer-friendly text:
+
+- spoken words only;
+- no ultra-short lines;
+- punctuation suitable for chunking;
+- pronunciation-safe station name;
+- no em dash pause artifacts;
+- a clean final handoff.
+
+Long-form characters get wider word ranges and explicit structure. Continuity is
+short, factual, and non-performative. The satirical talk character has a fixed
+argument mechanism and rejects abuse or accidental self-awareness that breaks
+the joke.
+
+## 8. Candidate metadata
+
+An accepted script sidecar records:
+
+```text
+station_id, show_id, show_name,
+host_id, host_name,
+segment_type, angle, text,
+private voice mapping identifier,
+review_status: candidate,
+generated_at, generator,
+model, generation_source,
+brief/config revision
 ```
-- Output only the spoken words. No stage directions, no markdown, no labels.
-- Write 50 to 90 spoken words. Never fewer than 25 or more than 120.
-- Structure: observation, presenter reaction, then a clean music handoff.
-- End with exactly this one music handoff: <handoff>. Do not stack or quote another.
-- Mention the station name no more than once.
-- Do not name real artists or real songs. None of the music on this station is real.
-- Do not use any of these phrases: <global denylist>.
-- Never use an em dash.
-```
 
-Long-form templates raise the word range and demand the personality land early;
-the continuity announcer template caps at a handful of words and forbids
-storytelling, opinion, and emotion; the comedy monologue template hard-codes its
-satirical structure and an exact closing line.
+Avoid copying raw reference paths into public logs or feeds. Production sidecars
+remain private.
 
-## 3. Angles and anti-staleness
+## 9. Operations separation
 
-Segment type is chosen at random per break. The **angle** (the story premise) is
-chosen to avoid repetition: the generator scans the host's existing non-rejected
-scripts, counts how many used each angle, and picks at random among the
-least-used ones. Never-used angles always win, so the host cycles its whole
-premise pool instead of circling the same few.
+The typed station operator is not the scriptwriter's shell. It can inspect
+health, now-playing, queue summary, lanes, talk stock, and flags through one
+validated read-only tool.
 
-## 4. The validation gate
+Script production is invoked by fixed scheduled jobs or trusted local queue
+commands. Approval, retries, configuration changes, and service control remain
+owner actions.
 
-A generated script returns a list of rejection reasons; any non-empty list fails
-it. The concrete checks:
-
-1. **Word-count bounds** per host (e.g. continuity `3 to 25`, a warm rambler
-   `80 to 150`, long-form record hosts `120 to 240`, a comedy monologue
-   `200 to 440`, default `25 to 120`).
-2. **Global "poetry-drift" denylist**: a list of purple phrases the models reach
-   for ("the pavement remembers", "the darkness whispered", and the like), matched
-   as substrings in both straight and curly-quote forms.
-3. **Per-host forbidden terms**: every entry in the host's `forbidden` list, matched
-   as a lowercase substring. This is why some forbidden entries are literal phrases,
-   for a comedy host who must never notice he has flipped his own argument, the
-   trigger phrases are banned outright.
-4. **Handoff presence** (non-continuity): exactly one of the host's handoffs must
-   appear. Zero rejects as "missing music handoff"; more than one as "stacked
-   handoffs".
-5. **Balanced quotes** and a **complete final sentence** (ends in `. ! ?`).
-6. **Station name normalized**: no un-normalized spelling of the station name may
-   remain (see the pronunciation note below).
-
-On failure the reasons are **appended to the prompt** ("The previous attempt was
-rejected for: ...; rewrite it completely") and the model tries again, up to three
-times. After three failures the item is skipped and the batch continues, so one
-bad generation never kills a run. This retry-with-reasons loop is most of what
-keeps hosts on voice.
-
-## 5. The deterministic fallback
-
-If no provider is configured, or the model returns nothing, or every attempt
-fails, the generator falls back to **built-in per-host lines**. The scripts are
-tagged `generation_source: "deterministic"` vs `"llm"`. This is what lets the
-render and QA pipeline (and the whole demo) run with no API key and no spend, and
-it guarantees a host is never left with an empty pool because the model was down.
-
-## 6. Writing for the voice
-
-The script layer enforces the rules the TTS needs (see [Voices](voices.md) for
-why):
-
-- **Em dashes are stripped** before storing (replaced with a comma). This is an
-  absolute house rule, and an em dash renders as an unintended pause.
-- **Spoken words only**, no stage directions, markdown, or labels, so the renderer
-  never voices annotations.
-- **No ultra-short lines** (word-count floors), and the continuity host is held to
-  short plain factual sentences.
-- **The station name is pinned to one spoken spelling** so the model pronounces the
-  call sign correctly.
-- The handoff must **end** the script, giving a clean musical out-point.
-
-## 7. Output
-
-Each accepted script is a JSON sidecar written to a per-show scripts directory,
-tagged `review_status: "candidate"`, carrying:
-
-```
-station_id, show_id, show_name, host_id, host_name,
-segment_type, angle, text, voice (reference clip path),
-review_status: "candidate", generated_at, generator,
-llm_model, generation_source
-```
-
-From here it enters [the talk pipeline](talk-pipeline.md): render to audio, QA,
-and promote to `approved` before it can air.
+From the accepted script sidecar, continue to the
+[talk pipeline](talk-pipeline.md) and [voice renderer](voices.md).

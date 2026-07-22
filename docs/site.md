@@ -1,111 +1,171 @@
-# Deep dive: the site (a custom single-page app)
+# Deep dive: the public site
 
-The website is one static `index.html`, a single-page app built on a small in-repo
-framework layered over React, wired entirely to live JSON the backend publishes. It
-has a persistent player so audio survives navigation, and a now-playing card whose
-progress bar tracks the real audio rather than a wall clock.
+The Studay FM website is a static receiver-style app backed by validated JSON
+published by the station. It has five station selectors, a persistent live
+player, truthful now-playing, schedule, presenters, catalogue, transmission log,
+saved items and programme views.
 
+```text
+validated private state
+          |
+   public-site builder
+          |
+ allowlisted static directory
+          |
+  Caddy on loopback
+          |
+ outbound tunnel and edge
 ```
-static index.html + a small framework (support.js over React)
-        │  fetch, no-store, poll every 5s
-        ▼
-per-station now-playing JSON  ·  today's schedule JSON  ·  catalogue JSON  ·  diary JSON
-        (written by the playout and publishers; the site is a pure static shell)
-```
 
-## 1. The component framework
+The site is a renderer of station truth, not an operations console.
 
-The app is authored as a **Design Component**: an HTML template block plus a
-`class Component extends DCLogic`. `DCLogic` is a small base class with React-style
-lifecycle methods (`componentDidMount`, etc.), `this.state` / `this.setState`, and a
-`renderVals()` that returns the value bag the template renders against. The runtime
-wraps each component in an internal React class with an error boundary.
+## 1. Public data boundary
 
-Templates are **compiled once**: the HTML is parsed into a `<template>`, walked once
-to produce an array of builder functions, and each builder returns a
-`React.createElement` tree from the current value bag. Re-render re-runs builders, it
-never re-parses strings. Expressions in `{{ }}` are evaluated by a small hand-written
-resolver (property paths, indexing, `===`/`!==`/`!`, literals), **not** `eval`.
+The backend publishes only intended public fields:
 
-## 2. Template directives
+- per-station ID, display name, current show, host, item type, track, artist,
+  start time, and duration;
+- resolver-derived flagship show windows for the next seven days;
+- approved catalogue entries and previews;
+- public diary entries;
+- bounded, path-free recently played entries.
 
-- **`{{ expr }}`** interpolation, in text nodes and in any attribute value.
-- **`sc-for`** repeats an element: `list="{{ arr }}"`, `as="item"` (plus `$index`), and
-  a placeholder count for skeletons while data streams.
-- **`sc-if`** renders children only when `value="{{ expr }}"` is truthy.
-- **Dynamic attributes on repeated elements**: a whole-value `{{ }}` returns the raw
-  resolved value, so `onClick="{{ row.onPlay }}"` binds a real per-row function and
-  `style="{{ row.style }}"` accepts a resolved object or a string (converted to a
-  React style object).
-- Attribute normalization handles `class`/`for`, `on*` handlers, `style-<pseudo>`
-  (e.g. `style-hover`) compiled into a generated CSS class, and a `<helmet>` tag that
-  mounts `<title>`/`<meta>`/`<link>` into `<head>`.
+Every JSON writer validates its contract before durable atomic replacement.
+Malformed or partial output never replaces the last complete feed.
 
-## 3. Routing
+The public build tool copies selected assets and feeds into a dedicated site
+directory. It does not expose the repository, private media root, review pages,
+queue, readiness internals, logs, prompts, references, or secrets.
 
-Hash routing: `#home`, `#schedule`, `#presenters`, `#catalogue`, `#diary` (anything
-else falls back to home). A `hashchange` listener sets the view, closes any modal,
-**refreshes route-specific data** (re-fetches the diary on `#diary`, the catalogue on
-`#catalogue`), updates the document title, and scrolls to top. Each screen is an
-`sc-if` block keyed off a boolean in `renderVals()`.
+## 2. Five-station navigation
 
-## 4. The persistent player
+The home view lets a listener switch among:
 
-A `position: fixed; bottom: 0` player bar lives **outside** all the route blocks, so
-it is always mounted and never unmounts on navigation; the body reserves space with
-`padding-bottom`. Two hidden `<audio>` elements are held on refs, one for the **live
-stream** and one for **catalogue track** playback. They are mutually exclusive
-(starting one pauses the other) but both persist across route changes, so audio keeps
-playing while you browse. Starting the live stream sets its `src` to the station's
-stream path **plus a cache-buster** (`?_=<timestamp>`) so it always joins a fresh live
-edge rather than resuming a stale buffer; pause clears `src` and calls `load()` to
-fully disconnect.
+- Studay FM;
+- StuLoFiDay;
+- Yacht Zone;
+- Tokyo Jazz;
+- C'est Magnifistu.
 
-## 5. The live now-playing card
+Switching a station changes the stream mount and now-playing feed but does not
+turn the page into an admin interface. Internal service status and mutation
+controls are absent.
 
-- A poll runs every **5 s** (`fetch` with `cache: 'no-store'`) against a **per-station
-  now-playing JSON**; a separate 1 s tick advances the progress bar smoothly between
-  polls.
-- **The progress bar is truthful**: elapsed is computed from the payload's real
-  playback start and duration,
-  `elapsed = (now - Date.parse(started_at)) / 1000`, clamped to
-  `[0, duration_seconds]`. A continuous dial with no `started_at`/`duration_seconds`
-  shows the live title with **no fabricated timing** rather than inventing a clock.
-- Fields consumed: `show_id`, `track`, `artist`, `started_at`, `duration_seconds`,
-  `type` (a `talk` type swaps the artist line for a host name). "Up next" comes from
-  the real today's-schedule feed, so specials and weekend shows appear automatically.
-- A station not yet broadcasting renders a truthful "online soon" placeholder, never
-  fake now-playing.
+## 3. Persistent player
 
-## 6. Catalogue and diary views
+The player bar remains mounted while the listener moves between app views.
+Starting a live stream uses a fresh URL so the browser joins the current edge
+rather than resuming a stale buffer. Pausing disconnects the audio element
+cleanly.
 
-- **Catalogue**: reads a catalogue JSON grouped into per-show lanes
-  (`{ title, artist, genre, duration, src }`). Filter chips (dynamic
-  `onClick`/`style`) narrow the list, each row has per-track play on the dedicated
-  catalogue `<audio>` element, and a "surprise me" control plays a random track.
-- **Diary**: reads a diary JSON of `{ time, mode, title, text }` entries, maps `mode`
-  to a colored chip, and renders a timeline (see [Continuity and the diary](continuity.md)).
+Catalogue preview playback uses a separate audio element and is mutually
+exclusive with the live stream. Both remain stable across route changes.
 
-## 7. Self-hosted runtime, no CDN
+## 4. Truthful now-playing
 
-React, ReactDOM, and Babel are served **locally from the site's own origin**
-(`/assets/...`), loaded with Subresource Integrity hashes, not from a CDN. The whole
-app boots from pinned, integrity-checked, offline-capable files with no third-party
-runtime dependency.
+The app polls the selected station's now-playing feed at a short interval with
+cache disabled. A local one-second tick animates progress between server updates.
 
-## 8. Mobile
+Progress is calculated from the payload's actual `started_at` and
+`duration_seconds`, then clamped to the duration. These fields originate from
+Liquidsoap's real track-change event.
 
-A single viewport meta, `overflow-x: hidden` guards, and **reflow-only** media
-queries. Because the layout is authored with inline styles, the media queries match on
-inline-style substrings (e.g. `[style*="repeat(4,"]`) to collapse multi-column grids
-to one or two columns and hide secondary catalogue columns on narrow screens, leaving
-the desktop layout untouched.
+If a flow item lacks reliable timing, the site shows the live title without
+inventing progress. News, talk, and continuity use their explicit item types so
+the presenter label changes correctly.
 
-## 9. Wiring to live data
+## 5. Schedule, programmes, catalogue, and transmission log
 
-The SPA is a pure static shell; every piece of live content is a JSON file fetched at
-runtime with `cache: 'no-store'`: a per-station now-playing JSON (polled every 5 s), a
-today's-schedule JSON, a catalogue JSON, and a diary JSON. These are written by the
-playout and its publishers (see [the station engine](station-engine.md) for how
-now-playing is produced), completely decoupled from the frontend, so the site is just
-a renderer of truth the backend already computed.
+- **Schedule:** reads the validated seven-day flagship windows, including weekend
+  replacements and specials. Listeners can switch between Pacific and their
+  browser's local time.
+- **Programmes:** provides shareable pages, browser-local saving and a calendar
+  download for the next real scheduled occurrence.
+- **Catalogue:** renders only approved public catalogue entries and can play
+  approved previews where present.
+- **Transmission log:** displays the Signalman's grounded public entries and
+  their modes.
+- **Recently played:** shows bounded music and bumper changes from all five live
+  feeds without exposing media paths or private review data.
+- **Daily discovery:** selects three real catalogue previews consistently for
+  each Los Angeles calendar day. It is not personalised.
+
+The public catalogue is not a directory listing of the media root. It is a
+separately generated allowlist.
+
+## 6. Receiver shell
+
+The current app is a small first-party HTML, CSS and JavaScript receiver shell.
+It has no browser-side compiler, third-party framework runtime or remote asset
+dependency. Hash routes keep the five main views, Saved and programme pages
+shareable while one audio player remains mounted.
+
+The receiver's moving dial is a station selector, not a claimed radio frequency
+or signal-strength instrument. The selected peak follows the chosen station,
+while the live signal and mini player displays respond to real browser audio when
+the stream is playing.
+
+The script policy is `script-src 'self'`; inline and evaluated scripts are not
+required.
+
+## 7. Security headers
+
+The site is served with:
+
+- self-origin Content Security Policy;
+- framing denial;
+- MIME sniffing protection;
+- no-referrer policy;
+- restrictive browser permissions;
+- cross-origin opener isolation;
+- HSTS at the public HTTPS boundary.
+
+Private path patterns return `404`. The documentation tree is not served by
+Caddy.
+
+## 8. Privacy
+
+The site currently has no PostHog embed, external font loader, analytics cookie,
+listener account or audience-tracking script. Saved stations, saved programmes
+and timezone preference remain in browser-local storage. It works entirely from
+first-party static assets, station JSON, and audio mounts.
+
+Ordinary request and stream metadata may still be handled by the tunnel/CDN,
+Caddy, Icecast, and the listener's network provider.
+
+If analytics return, decide the minimum events, retention, disclosure, and
+consent requirements before adding code.
+
+## 9. Listener and mobile behaviour
+
+Supported browsers receive Media Session metadata and play/pause actions. Native
+sharing uses the browser share sheet with a copy fallback. The installable app
+shell caches only reviewed static assets; live JSON, streams and preview audio
+remain network-owned.
+
+The site uses one viewport, overflow guards, responsive grids, and reflow-focused
+media queries. The player remains reachable without covering the current item,
+and secondary catalogue columns collapse on narrow screens.
+
+## 10. Failure behavior
+
+- Missing one station feed shows an unavailable state for that dial.
+- Invalid JSON never replaces the prior complete feed.
+- Stale timing does not fabricate progress.
+- A missing catalogue or diary feed does not stop live playback.
+- Private operational data is not available through a hidden route because it
+  is never copied into the public build.
+
+## 11. Demo site and repository split
+
+The Docker demo has a simpler one-station page and direct local ports. Its
+quickstart remains unchanged while it is extracted into a separate generic AI
+radio repository. This repository remains the public home of Studay FM itself.
+Production hardening can be adopted incrementally:
+
+1. publish validated atomic JSON;
+2. separate the public build from the repository;
+3. put site and stream origins on loopback;
+4. add an outbound tunnel or reviewed reverse proxy;
+5. add headers and private-path tests;
+6. keep operations out of the browser UI.
