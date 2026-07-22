@@ -33,7 +33,7 @@ The current dials are:
 - Studay FM, schedule-driven;
 - StuLoFiDay, time-of-day lo-fi flow;
 - Yacht Zone, yacht-rock day and house night;
-- Tokyo Jazz Hop, continuous instrumental flow;
+- Tokyo Jazz, continuous instrumental flow;
 - C'est Magnifistu, eclectic flow with sparse continuity and news.
 
 Separate playout processes allow a one-station restart and independent health
@@ -111,7 +111,7 @@ Flow stations use simpler manifests and time/weight rules:
 
 - lo-fi chooses from time-of-day pools;
 - Yacht changes between day and night manifests;
-- Tokyo Jazz Hop draws from one approved instrumental pool;
+- Tokyo Jazz draws from one approved instrumental pool;
 - C'est rotates its main and jazz pools with sparse continuity and a transient
   bulletin fallback.
 

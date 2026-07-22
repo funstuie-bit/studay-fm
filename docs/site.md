@@ -1,8 +1,9 @@
 # Deep dive: the public site
 
-The Studay FM website is a static single-page app backed by validated JSON
+The Studay FM website is a static receiver-style app backed by validated JSON
 published by the station. It has five station selectors, a persistent live
-player, truthful now-playing, schedule, presenters, catalogue, and diary views.
+player, truthful now-playing, schedule, presenters, catalogue, transmission log,
+saved items and programme views.
 
 ```text
 validated private state
@@ -24,9 +25,10 @@ The backend publishes only intended public fields:
 
 - per-station ID, display name, current show, host, item type, track, artist,
   start time, and duration;
-- today's flagship show windows;
-- approved catalogue entries;
-- public diary entries.
+- resolver-derived flagship show windows for the next seven days;
+- approved catalogue entries and previews;
+- public diary entries;
+- bounded, path-free recently played entries.
 
 Every JSON writer validates its contract before durable atomic replacement.
 Malformed or partial output never replaces the last complete feed.
@@ -42,7 +44,7 @@ The home view lets a listener switch among:
 - Studay FM;
 - StuLoFiDay;
 - Yacht Zone;
-- Tokyo Jazz Hop;
+- Tokyo Jazz;
 - C'est Magnifistu.
 
 Switching a station changes the stream mount and now-playing feed but does not
@@ -72,29 +74,39 @@ If a flow item lacks reliable timing, the site shows the live title without
 inventing progress. News, talk, and continuity use their explicit item types so
 the presenter label changes correctly.
 
-## 5. Schedule, catalogue, and diary
+## 5. Schedule, programmes, catalogue, and transmission log
 
-- **Schedule:** reads today's validated flagship windows, including weekend
-  replacements and specials.
+- **Schedule:** reads the validated seven-day flagship windows, including weekend
+  replacements and specials. Listeners can switch between Pacific and their
+  browser's local time.
+- **Programmes:** provides shareable pages, browser-local saving and a calendar
+  download for the next real scheduled occurrence.
 - **Catalogue:** renders only approved public catalogue entries and can play
   approved previews where present.
-- **Diary:** displays the Signalman's grounded public entries and their modes.
+- **Transmission log:** displays the Signalman's grounded public entries and
+  their modes.
+- **Recently played:** shows bounded music and bumper changes from all five live
+  feeds without exposing media paths or private review data.
+- **Daily discovery:** selects three real catalogue previews consistently for
+  each Los Angeles calendar day. It is not personalised.
 
 The public catalogue is not a directory listing of the media root. It is a
 separately generated allowlist.
 
-## 6. Frontend framework
+## 6. Receiver shell
 
-The current app is a small in-repository template layer over vendored React. It
-supports interpolation, conditional blocks, repeated rows, hash routing, dynamic
-attributes, and a persistent component state model.
+The current app is a small first-party HTML, CSS and JavaScript receiver shell.
+It has no browser-side compiler, third-party framework runtime or remote asset
+dependency. Hash routes keep the five main views, Saved and programme pages
+shareable while one audio player remains mounted.
 
-Expression handling uses a restricted resolver rather than arbitrary application
-data passed to `eval`. The browser compilation runtime is vendored and
-integrity-pinned, so the site does not depend on a third-party CDN at runtime.
+The receiver's moving dial is a station selector, not a claimed radio frequency
+or signal-strength instrument. The selected peak follows the chosen station,
+while the live signal and mini player displays respond to real browser audio when
+the stream is playing.
 
-The remaining frontend debt is architectural: browser-side compilation and
-inline styles require looser CSP allowances than a precompiled bundle would.
+The script policy is `script-src 'self'`; inline and evaluated scripts are not
+required.
 
 ## 7. Security headers
 
@@ -114,8 +126,9 @@ Caddy.
 ## 8. Privacy
 
 The site currently has no PostHog embed, external font loader, analytics cookie,
-or audience-tracking script. It works entirely from first-party static assets,
-station JSON, and audio mounts.
+listener account or audience-tracking script. Saved stations, saved programmes
+and timezone preference remain in browser-local storage. It works entirely from
+first-party static assets, station JSON, and audio mounts.
 
 Ordinary request and stream metadata may still be handled by the tunnel/CDN,
 Caddy, Icecast, and the listener's network provider.
@@ -123,7 +136,12 @@ Caddy, Icecast, and the listener's network provider.
 If analytics return, decide the minimum events, retention, disclosure, and
 consent requirements before adding code.
 
-## 9. Mobile behavior
+## 9. Listener and mobile behaviour
+
+Supported browsers receive Media Session metadata and play/pause actions. Native
+sharing uses the browser share sheet with a copy fallback. The installable app
+shell caches only reviewed static assets; live JSON, streams and preview audio
+remain network-owned.
 
 The site uses one viewport, overflow guards, responsive grids, and reflow-focused
 media queries. The player remains reachable without covering the current item,
@@ -138,10 +156,12 @@ and secondary catalogue columns collapse on narrow screens.
 - Private operational data is not available through a hidden route because it
   is never copied into the public build.
 
-## 11. Demo site
+## 11. Demo site and repository split
 
 The Docker demo has a simpler one-station page and direct local ports. Its
-quickstart remains unchanged. Production hardening can be adopted incrementally:
+quickstart remains unchanged while it is extracted into a separate generic AI
+radio repository. This repository remains the public home of Studay FM itself.
+Production hardening can be adopted incrementally:
 
 1. publish validated atomic JSON;
 2. separate the public build from the repository;

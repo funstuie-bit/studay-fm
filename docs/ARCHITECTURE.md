@@ -54,7 +54,7 @@ The network has exactly five current dials:
 | Studay FM | Schedule-driven | Weekday clock, weekend replacements, specials, DJ breaks, continuity |
 | StuLoFiDay | Flow | Time-of-day lo-fi pools |
 | Yacht Zone | Flow | Yacht rock by day, house by night, sparse host breaks |
-| Tokyo Jazz Hop | Flow | Continuous instrumental jazz-hop |
+| Tokyo Jazz | Flow | Continuous instrumental jazz-hop |
 | C'est Magnifistu | Flow | Eclectic music, Airelle continuity, hourly music-and-culture bulletin |
 
 The flagship builds a timestamped schedule from show rules and writes a flat

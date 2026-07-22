@@ -1,21 +1,29 @@
 # Studay FM
 
-**A five-station, automated AI radio network with owner-controlled operations.**
+**A hobby project building towards a fully autonomous, AI-managed radio network.**
 
 ### Listen live: [studayfm.com](https://studayfm.com)
 
 ![Studay FM, live](docs/images/hero.png)
 
-Studay FM schedules and streams music around the clock, writes presenter links,
-renders character voices, publishes live station data, and monitors the broadcast.
-The system is highly automated, but it is deliberately not an unsupervised
-administrator: media approval, service changes, deployments, and other mutations
-remain owner-controlled.
+Studay FM began as a hobby and is meant to stay fun. It schedules and streams
+music around the clock, writes presenter links, renders character voices,
+publishes live station data, and monitors the broadcast. The destination is a
+station whose programming, production and routine management are genuinely run
+by AI, with the owner retaining an emergency stop and setting the creative intent.
 
-This repository is the **public build guide and Docker demo**. It explains the
-architecture and reusable workflows without publishing the private production
-deployment, credentials, voice references, operational state, or media library.
-If you want to try the small demo first, jump to [Run your own](#run-your-own).
+Today the station is highly automated, but it is not yet fully autonomous.
+Security-sensitive and irreversible actions remain owner-controlled while the
+automation earns broader authority. Those controls are transitional scaffolding,
+not a change to the goal. New work should make the station sound better, require
+less routine intervention, improve reliability, or make the hobby more enjoyable.
+
+This repository is the **public home of Studay FM**. It presents the live project,
+its current design and the parts of its architecture that can be shared without
+publishing credentials, voice references, operational state or the private media
+library. The existing Docker demo remains available for now, but a reusable
+build-your-own AI radio station will become a separate project and repository.
+See the [project direction and roadmap](ROADMAP.md).
 
 ## The dial
 
@@ -24,12 +32,26 @@ If you want to try the small demo first, jump to [Run your own](#run-your-own).
 | **Studay FM** | A full weekday clock, weekend crew, and weekly specials | Character DJs plus continuity |
 | **StuLoFiDay** | Lo-fi beats for work and study | Continuous, no regular breaks |
 | **Yacht Zone** | Yacht rock by day, deep house by night | The Captain |
-| **Tokyo Jazz Hop** | Instrumental jazz-hop and beat-tape | Continuous, no regular breaks |
+| **Tokyo Jazz** | Instrumental jazz-hop and beat-tape | Continuous, no regular breaks |
 | **C'est Magnifistu** | European-flavoured eclectic flow | Airelle continuity plus a sourced music-and-culture bulletin |
 
 The five outputs are independent Liquidsoap graphs publishing continuous MP3
 streams to separate Icecast mounts. A failure on one dial can be diagnosed and
 recovered without restarting the others.
+
+## The public receiver
+
+The live site uses one receiver-style interface across Home, Schedule,
+Presenters, Catalogue, Transmission Log, Saved and programme pages. The dial,
+ticker, current programme, artwork, progress and persistent player all follow
+the five real station feeds and mounts.
+
+Listener features include Media Session metadata, native sharing with a copy
+fallback, Pacific or browser-local schedule times, browser-local favourites,
+shareable programme pages, calendar reminders, five-station recently played,
+daily catalogue discoveries and an installable app shell. Preferences stay on
+the listener's device. There is no listener account or analytics profile, and
+live data and audio are never served from the offline cache.
 
 ## The presenters
 
@@ -124,16 +146,16 @@ required bounded generation route for an allowlisted model; model-management,
 pull, delete, filesystem, and raw administration routes are not forwarded.
 That interchangeability does not grant the model operational authority.
 
-The original goal was a fully local coordinator. In practice, earlier local
+The goal remains a fully autonomous AI station manager. In practice, earlier local
 coordination was not reliable enough for safe mutation. Both the scheduled
 operator and the private ops bot therefore receive one typed, read-only
 station-query tool. They cannot run a shell, edit files, approve media, enqueue
 generation, restart services, or deploy code. A hosted provider can remain a
 bounded fallback without receiving broader tools.
 
-Complete self-governance remains a future goal, contingent on reliable local
-tool use, a dedicated least-privilege service account, restricted credentials,
-and a separately reviewed mutation policy.
+Authority will expand in tested, reversible steps as local tool use and recovery
+become dependable. The point of the safety boundary is to make autonomy durable,
+not to turn a hobby radio station into a permanent manual operations job.
 
 ## Internal generation boundaries
 
@@ -187,23 +209,26 @@ scheduled job does not delete media.
 - **Hundreds** of generated tracks across many show-specific lanes
 - **1** source-attributed music-and-culture bulletin workflow
 - **1** typed read-only operational view shared by the CLI, operator, and private bot
-- **0** model-accessible mutation tools
+- **0** model-accessible mutation tools at the current autonomy stage
 
 ## Read the deep dives
 
-Start with [Architecture](docs/ARCHITECTURE.md), then read the
+Start with the [Roadmap](ROADMAP.md) and [Architecture](docs/ARCHITECTURE.md), then read the
 [Phase 5 quality and safety summary](docs/phase-5.md) or use the
 [deep-dive index](docs/README.md) for the station engine, music, voices, talk,
 news, site, serving, continuity, and reliability. The small public demo remains
 documented separately in [SETUP.md](SETUP.md).
 
-## Run your own
+## Current Docker demo
 
-You do not need the five-station production topology to start. The repository
-includes a much smaller Docker demo that streams a seed library as one
+The current repository still includes a much smaller Docker demo that streams a seed library as one
 continuous station, adds hosted breaks between songs, and publishes a simple
 now-playing page. It needs no GPU, LLM account, or private voice reference:
 built-in lines and a basic local voice are the defaults.
+
+This demo is an incubator, not the long-term identity of the Studay FM repository.
+The next repository will extract a generic AI radio station that people can run
+and adapt without carrying Studay FM's private production history or identity.
 
 ![The demo's now-playing page](docs/images/demo-nowplaying.png)
 
