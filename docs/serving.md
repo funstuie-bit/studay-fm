@@ -107,9 +107,9 @@ The Caddy origin and edge should provide:
 - cross-origin opener isolation;
 - HSTS on the public HTTPS hostname.
 
-The current legacy frontend still needs allowances for inline styling and its
-vendored browser compilation runtime. Precompiling the frontend would allow a
-tighter CSP without `unsafe-inline` and `unsafe-eval`.
+The receiver shell uses first-party HTML, CSS and JavaScript with a
+`script-src 'self'` policy. It does not require a browser compiler,
+`unsafe-inline` or `unsafe-eval`.
 
 ## 7. Privacy
 

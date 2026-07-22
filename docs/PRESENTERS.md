@@ -110,7 +110,7 @@ than being layered ambiguously on top of it.
 - **The Newsreader** presents a short music-and-culture bulletin built from
   bounded live feeds. Every approved story is traceable to retained source
   metadata and its outlet is attributed in the spoken script.
-- **StuLoFiDay** and **Tokyo Jazz Hop** are primarily continuous music stations.
+- **StuLoFiDay** and **Tokyo Jazz** are primarily continuous music stations.
 
 ## Writing and approval
 

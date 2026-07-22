@@ -1,5 +1,9 @@
 # Deploying for real
 
+This guide applies to the current generic Docker demo. The demo is due to move
+to a separate reusable AI radio repository; it is not the private Studay FM
+production deployment.
+
 The Docker demo runs the whole station on one box. To run it like the live
 network, you split the work across machines and keep it always on. Nothing here
 changes the app: it is the same stack, wired to services on other hosts and set

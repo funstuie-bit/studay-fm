@@ -1,4 +1,8 @@
-# Setting up your own Studay FM
+# Running the current Docker demo
+
+This demo is the reusable starter that grew alongside Studay FM. It remains here
+temporarily, but it will move into a separate generic AI radio repository. It is
+not a copy of the private five-station production deployment.
 
 This guide has two tracks:
 
@@ -6,9 +10,9 @@ This guide has two tracks:
 2. grow it into a hardened multi-station system using the production patterns
    documented in this repository.
 
-The production design is automated but owner-controlled. Models can write
-bounded content and summarize typed station state. They do not receive shell,
-queue, approval, service-control, or deployment authority.
+The live project is working towards full AI management. Current production
+authority remains narrower than that destination while reversible operational
+control is developed and proved.
 
 ## The fast path
 

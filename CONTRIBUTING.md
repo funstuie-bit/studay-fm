@@ -1,8 +1,8 @@
 # Contributing
 
-Thanks for your interest. This repo is a public demo and build guide for a
-Studay-FM-style AI radio network: a one-command Docker demo you can run and then
-grow into your own station.
+Thanks for your interest. This is the public home of the Studay FM hobby radio
+project. It also contains the early one-command Docker demo while a generic
+build-your-own AI radio station is prepared as a separate repository.
 
 ## Ground rules
 
@@ -26,7 +26,7 @@ script also fails on em and en dashes.
 
 ## Developing
 
-The whole thing is the Docker demo. To work on it:
+The runnable contribution surface is currently the Docker demo. To work on it:
 
 ```sh
 cp .env.example .env

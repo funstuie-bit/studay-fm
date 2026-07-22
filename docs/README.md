@@ -4,7 +4,7 @@ These pages describe the production design without publishing a private
 deployment. The deep dives are flattened directly into `docs/` in this public
 repository.
 
-Start with [Architecture](ARCHITECTURE.md), then choose a subsystem:
+Start with the [project direction](../ROADMAP.md) and [Architecture](ARCHITECTURE.md), then choose a subsystem:
 
 | Page | What it covers |
 |---|---|
@@ -17,7 +17,7 @@ Start with [Architecture](ARCHITECTURE.md), then choose a subsystem:
 | [Talk pipeline](talk-pipeline.md) | Fixed producer workflow, review, QA, manifests, stocking, freshness, retirement |
 | [Newsreader](newsreader.md) | Bounded feeds, structured source IDs, attribution gate, render-once fan-out |
 | [Continuity and diary](continuity.md) | Hour markers, flow links, grounded diary, atomic publication |
-| [Site](site.md) | Five-station SPA, validated live JSON, persistent player, privacy and frontend constraints |
+| [Site](site.md) | Receiver-style public site, five live stations, listener features, privacy and failure behaviour |
 | [Serving](serving.md) | Loopback origins, outbound tunnel, path allowlist, public build boundary, headers |
 | [Reliability](reliability.md) | Watchdog, readiness, queue recovery, transition alerts, service isolation, retention |
 
@@ -29,15 +29,14 @@ Start with [Architecture](ARCHITECTURE.md), then choose a subsystem:
   are all required.
 - **State is contracted and atomic.** Writers validate before durable replace;
   readers reject malformed or stale evidence.
-- **Models do not administer the station.** The current operator and private ops
-  bot share one typed read-only query surface.
+- **Autonomy remains the destination.** Current model authority is deliberately
+  narrow and expands only through tested, reversible steps.
 - **Speech categories share one arbiter.** Presenter links, continuity, and
   bulletins cannot stack; a full music track separates voice items.
 - **Local inference is not a raw model API.** An authenticated loopback gateway
   exposes only bounded generation for an allowlisted model.
-- **Local self-governance is deferred.** Earlier local coordination was
-  unreliable; mutation remains owner-controlled even when local inference is
-  available.
+- **Owner controls are transitional scaffolding.** They protect the live hobby
+  while the AI manager earns dependable authority; they are not the end state.
 - **Music iteration is reviewable.** Prompt pools are versioned, new recipes
   create candidates, and owner feedback is digest-bound and append-only.
 - **Internal APIs are still security boundaries.** Authentication, size limits,
@@ -53,4 +52,4 @@ Start with [Architecture](ARCHITECTURE.md), then choose a subsystem:
   candidate review, references, and operations documents are not web roots.
 
 For the small Docker-compatible demo, return to the
-[README quickstart](../README.md#run-your-own) and [SETUP.md](../SETUP.md).
+[README quickstart](../README.md#current-docker-demo) and [SETUP.md](../SETUP.md).
