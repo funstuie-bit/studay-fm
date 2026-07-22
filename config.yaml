@@ -50,8 +50,9 @@ services:
 
   # VOICE: turns each line into speech. The demo ships a basic espeak server
   # (robotic, no GPU). Point this at your own Chatterbox (or any server speaking
-  # the same contract, POST /tts {text, voice_ref} -> wav) for cloned voices, and
-  # set voice_ref to your reference clip mounted into the dj service.
+  # the same contract, POST /tts {text, voice_ref} -> wav) for
+  # reference-conditioned speech, and set voice_ref to a rights-cleared private
+  # reference clip mounted into the dj service.
   tts:
     url: "http://tts:5002"
     voice_ref: ""         # e.g. /voices/my_host.wav  (ignored by the espeak default)

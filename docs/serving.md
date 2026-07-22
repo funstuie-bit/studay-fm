@@ -1,103 +1,159 @@
 # Deep dive: public access and serving
 
-The whole network is reachable on one public hostname with **no open inbound ports**.
-An outbound-only tunnel connector dials the edge, one set of path rules routes the
-hostname to a static-site server and to each per-station audio mount, TLS terminates at
-the edge, and the static site is served with aggressive edge caching. There is exactly
-one law that keeps it all working: **one connector**.
+Studay FM exposes one public hostname through an outbound-only named tunnel. The
+origin services listen on loopback: Icecast serves the five stream mounts, and
+Caddy serves an allowlisted public-site build.
 
-```
-listeners ──HTTPS──►  CDN edge  ──(outbound tunnel)──►  connector  ─►  site server (site + data)
-                       (TLS)      no inbound ports                  └►  streaming server (mounts)
-```
-
-## 1. Outbound-only tunnel
-
-A named tunnel ([Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/) here)
-fronts everything. A **connector daemon runs on the origin and dials outbound** to the
-edge, which holds the persistent connection. Nothing listens for inbound connections:
-**no open ports on the origin, no port-forwarding on the router**, and the origin is
-never directly reachable from the internet. The connector runs as a supervised,
-auto-restarting service (see [Reliability](reliability.md)).
-
-## 2. Ingress: one hostname, a path per mount
-
-The connector config is an **ordered list of ingress rules**, each matching a hostname
-and path and forwarding to a **local plain-HTTP backend**. First match wins; the last
-rule is a catch-all. There are two backends on the origin, both on loopback: the
-streaming server (serving the per-station audio mounts) and the static-site server
-(serving everything else).
-
-```yaml
-- hostname: <one-public-host>
-  path: ^/(mount-a|mount-b|mount-c)$     # -> streaming backend (per-station mounts)
-  service: http://localhost:8000
-- hostname: <one-public-host>
-  service: http://localhost:8090         # catch-all -> the static site
+```text
+listeners -> HTTPS edge -> outbound tunnel connector
+                                  |
+                    +-------------+-------------+
+                    |                           |
+             five mount paths             public site paths
+                    |                           |
+            loopback Icecast              loopback Caddy
 ```
 
-Two things to get right when you add a station:
+No router port-forward is required, and the repository is not a web root.
 
-- **A path per mount.** Each mount name must be whitelisted in the path pattern, or the
-  request falls through to the site backend and 404s. Adding a station means: a
-  streaming mount, an ingress path entry, and a site card.
-- **End-anchor the path regex** (`...)$`). Without the `$`, a site path that merely
-  begins with a mount name (for example `/<mount>-something`) would wrongly route to
-  the streaming backend and 404. The same rules are duplicated for the apex and `www`
-  hostnames, so a new mount goes in both.
+## 1. Loopback origins
 
-After editing ingress, restart the connector and re-check the connector count (below).
+Icecast and Caddy bind only to loopback. The tunnel connector reaches them
+locally and dials outbound to the edge.
 
-## 3. The one-connector law
+This prevents a service accidentally becoming reachable on every LAN interface.
+The watchdog verifies expected listeners and flags unexpected wildcard binds.
 
-**Exactly one connector may be registered to the tunnel.** The edge **load-balances
-across every connector currently dialed in**. If a second connector is running anywhere
-(classically a retired box whose connector service was never stopped, still holding an
-old ingress config), then roughly **half of all requests are routed to the stale
-origin**. The symptom is intermittent public 404s and stream cutouts that flap, **while
-the origin looks perfectly healthy locally** (a local request returns 200).
+The public guide uses the conventional local ports in examples, but a deployment
+can choose different loopback ports as long as the station registry, tunnel
+rules, health checks, and public build agree.
 
-Tell-tale: an empty-body 404 carrying a `server: cloudflare` header is the connector's
-own "no ingress matched" catch-all, not a CDN error page, meaning traffic reached a
-connector whose config did not know the hostname.
+## 2. Route allowlist
 
-This was a real outage (a decommissioned box still ran a connector against the same
-tunnel with a config that only knew a legacy hostname; about half the traffic matched
-no ingress and 404'd). So the **first diagnostic for any public flap** is the connector
-count:
+Tunnel ingress is an ordered allowlist:
 
-```
-<tunnel-tool> tunnel info <tunnel-name>    # MUST show exactly one connector
-```
+1. exact stream mount paths route to Icecast;
+2. the intended public status resource can route to Icecast if required;
+3. all approved site paths route to Caddy;
+4. unmatched requests fail closed.
 
-If a second appears, stop the rogue connector on the other box and revoke its tunnel
-credentials so it cannot re-register. The health watchdog enforces this automatically
-(see [Reliability](reliability.md)).
+Mount patterns are end-anchored. Without an end anchor, a site path beginning
+with a mount name could be misrouted to Icecast.
 
-## 4. Static site serving and edge caching
+Adding a station requires coordinated changes to:
 
-The static site is served by a local web server rooting the site directory, with
-compression on and a **cache-tiering** policy so the edge does the heavy lifting:
+- station registry;
+- Icecast mount;
+- Liquidsoap output;
+- tunnel mount allowlist;
+- site station card and now-playing feed;
+- watchdog expectations.
 
-- **Vendored libraries** (`/assets/*`): immutable, `Cache-Control: public,
-  max-age=31536000, immutable`.
-- **Slow-rotating media** (images, audio): about a day at the edge.
-- **App shell and live data** (the HTML, the framework script, the now-playing and data
-  JSON): `Cache-Control: no-cache`, so edits and fresh data go live immediately.
+## 3. One connector per origin
 
-Net effect: the app shell and the now-playing / data JSON are always revalidated (so
-changes are instant), while framework bundles and artwork are served from the CDN edge
-rather than round-tripping the origin on every request.
+The edge can load-balance among every connector registered to one tunnel. An old
+machine left connected with stale ingress rules can therefore create
+intermittent public failures while the current origin looks healthy.
 
-## 5. TLS at the edge
+Keep one intended connector for this origin and include connector count in
+health checks. If a retired connector appears, disable and revoke that connector
+through an owner-controlled incident process.
 
-TLS terminates at the CDN edge; public clients get HTTPS from the edge, and the
-**origin speaks plain HTTP** to the connector over its loopback backends. No
-certificates are managed on the origin.
+## 4. Public build boundary
 
-## 6. The principle
+Caddy serves a generated allowlist directory, not `docs/`, not the repository
+root, and not private state.
 
-Outbound-only, no port-forwarding, the origin never directly exposed. One hostname,
-path-routed to a static-site backend and a per-mount streaming backend. Public
-reachability depends entirely on **exactly one** connector being registered, so the
-connector count is the first thing to check whenever public access misbehaves.
+The build copies only intended artifacts such as:
+
+- app shell and vendored runtime;
+- artwork and other approved static assets;
+- validated now-playing, schedule, catalogue, and diary feeds;
+- approved public audio samples, if explicitly included.
+
+It must not copy:
+
+- candidate review or audition pages;
+- source voice references;
+- private reports, logs, prompts, or queue records;
+- service configuration or secrets;
+- operational runbooks and migration evidence;
+- raw generated-media directories.
+
+Known private paths should return `404` even if a link is created accidentally.
+
+## 5. Caching
+
+Use different cache policies by artifact:
+
+- fingerprinted vendored assets: long-lived immutable caching;
+- artwork and slow-changing media: moderate caching;
+- HTML shell and live JSON: no-cache or revalidation;
+- streams: origin/edge behavior appropriate for live audio, not static-object
+  caching.
+
+Now-playing requests use no-store semantics so the UI does not resume stale
+metadata.
+
+## 6. Security headers
+
+The Caddy origin and edge should provide:
+
+- Content Security Policy restricted to the station origin;
+- framing denial;
+- MIME sniffing protection;
+- `no-referrer`;
+- restrictive browser permissions;
+- cross-origin opener isolation;
+- HSTS on the public HTTPS hostname.
+
+The receiver shell uses first-party HTML, CSS and JavaScript with a
+`script-src 'self'` policy. It does not require a browser compiler,
+`unsafe-inline` or `unsafe-eval`.
+
+## 7. Privacy
+
+The public site does not need audience analytics to operate. The current design
+loads no PostHog script, external font loader, analytics cookie, or similar
+tracking code.
+
+Cloudflare, Caddy, Icecast, and network providers may still process ordinary
+connection metadata as infrastructure. If analytics are reintroduced, review
+disclosure, retention, data minimization, and any applicable consent requirement
+before deployment.
+
+Historical analytics data can be deleted separately if it has no continuing
+purpose.
+
+## 8. TLS
+
+Public TLS terminates at the edge. The tunnel connects to loopback HTTP origins,
+so the origin does not need a publicly trusted certificate or open TLS port.
+
+Keep tunnel credentials scoped. An account-wide credential is more powerful
+than a single tunnel credential and should not be left on the origin merely for
+convenience.
+
+## 9. Failure diagnosis
+
+Separate checks answer different questions:
+
+- Caddy on loopback: is the site origin alive?
+- Icecast on loopback: is the stream origin alive?
+- Five source count: are the encoders connected?
+- Public site request: is tunnel/edge routing healthy?
+- Public mount request: does the mount route work?
+- Connector count: is stale-origin split traffic possible?
+
+Do not work around a tunnel problem by rebinding Icecast or Caddy to a wildcard
+interface.
+
+## 10. Demo compatibility
+
+The public Docker demo intentionally binds host ports so a local user can open
+the player and stream directly. That is a convenience for a development demo,
+not the production ingress model.
+
+Before exposing the demo, replace its example passwords and put it behind a
+reviewed TLS/reverse-proxy boundary. The production loopback-and-tunnel guidance
+does not require changing the demo quickstart.
