@@ -3,7 +3,7 @@
 A 24/7 radio network needs independent supervision, contracted state, and
 failure-safe fallbacks more than it needs an all-powerful agent. Studay FM uses a
 one-shot watchdog, atomic readiness, per-component services, a crash-aware queue,
-and typed read-only operations.
+and typed capability boundaries.
 
 ## 1. Watchdog model
 
@@ -185,27 +185,22 @@ A calendar job can be healthy with no current PID. Evaluate its schedule, last
 exit, heartbeat, log, and output time rather than assuming “not running” means
 failed.
 
-## 12. Read-only operations
+## 12. Typed operations and bounded repair
 
-The canonical CLI offers typed observation commands and bounded allowlisted log
-tails. The scheduled operator and private ops bot receive the same
-`station_query` capability.
+The canonical capability broker offers observation commands and bounded
+allowlisted log tails. Models do not receive a shell, arbitrary file access,
+approval authority, deployment tools or unrestricted service control.
 
-They cannot:
+An explicit owner instruction can authorize a narrow reversible action through
+a separately validated action contract. Exact-target binding prevents delayed
+requests from affecting a replacement item, and every attempt produces a typed
+receipt.
 
-- run shell commands;
-- read arbitrary files;
-- enqueue or retry work;
-- generate or approve media;
-- restart services;
-- change configuration;
-- deploy code.
-
-Earlier local coordination was unreliable, so model access remains observational
-and read-only. A local model is reached through an authenticated loopback,
-inference-only gateway that allowlists its model and request shape while
-rejecting administration routes. A hosted provider can be a bounded fallback.
-Owner control is a reliability feature as well as a security feature.
+One deterministic repair class may run automatically after repeated matching
+evidence. It is pre-authorized, idempotent, rate-limited, postcondition-checked
+and unable to select a different action. Transition alerts debounce short-lived
+intermediate states so the owner sees durable problems rather than immediate
+alert/resolved noise.
 
 ## 13. Isolated change gates
 

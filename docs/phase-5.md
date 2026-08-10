@@ -85,9 +85,8 @@ automation. A loopback gateway:
 - rejects browser-origin requests and administrative model routes;
 - keeps the underlying transport private.
 
-The operator and private bot still receive only the typed read-only station
-query. Local inference improves availability and cost; it does not expand
-authority.
+Writing workflows still receive only bounded inputs and cannot approve or mutate
+media. Owner-authorized operations use a separate typed action boundary.
 
 ## Verification and CI
 

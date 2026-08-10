@@ -1,8 +1,9 @@
 # Deep dive: continuity and the diary
 
-Continuity gives the network a voice between shows without giving that voice
-operational authority. The Signalman marks flagship transitions and writes a
-grounded public diary; Airelle provides sparse links on C'est Magnifistu.
+Continuity gives the network a voice between shows without turning presenter
+text into operational authority. The Signalman marks flagship transitions and
+writes a grounded public diary; Airelle provides sparse links on C'est
+Magnifistu.
 
 ```text
 real station state -> bounded writing call or deterministic fallback
@@ -24,8 +25,11 @@ The Signalman is a fictional continuity character. It can describe the station
 and appear between programmes, but it cannot restart a service, approve media,
 enqueue work, or change the schedule.
 
-The private operational model is separate. It receives a typed read-only station
-query and can only observe and recommend.
+The operational capability broker is separate. Owner-authorized actions and
+deterministic repairs cannot be triggered by public-facing character text.
+
+A separate Signalman programme-director shadow can propose exact approved tracks
+and speech decisions for evaluation, but it cannot alter live playout.
 
 Keeping these roles separate prevents public-facing character text from becoming
 an administration channel.

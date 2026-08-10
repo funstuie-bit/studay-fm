@@ -199,7 +199,7 @@ Playout liveness is only one readiness input. The watchdog also checks:
 - disk and log growth.
 
 It writes an atomic readiness document. The flagship readiness endpoint fails
-closed on missing, invalid, stale, or red evidence. The read-only operations CLI
+closed on missing, invalid, stale, or red evidence. The typed operations view
 and LLM tools read this computed state rather than launching their own probes.
 
 ## 10. Failure behavior

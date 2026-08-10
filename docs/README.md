@@ -14,6 +14,7 @@ Start with the [project direction](../ROADMAP.md) and [Architecture](ARCHITECTUR
 | [Music generation](music.md) | ACE-Step recipe, authenticated bounded API, queue v2, technical QA, lane rotation |
 | [Voices](voices.md) | Reference-conditioned speech, one-shot creative intent, renderer containment, post-processing, QA |
 | [DJ scripts](dj-scripts.md) | Character briefs, bounded LLM calls, validation, candidate metadata, deterministic fallback |
+| [Programme direction](programme-direction.md) | Track-aware links, exact-asset proposals, bounded session state, shadow evaluation |
 | [Talk pipeline](talk-pipeline.md) | Fixed producer workflow, review, QA, manifests, stocking, freshness, retirement |
 | [Newsreader](newsreader.md) | Bounded feeds, structured source IDs, attribution gate, render-once fan-out |
 | [Continuity and diary](continuity.md) | Hour markers, flow links, grounded diary, atomic publication |

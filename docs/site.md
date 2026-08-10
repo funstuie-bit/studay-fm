@@ -58,6 +58,11 @@ Starting a live stream uses a fresh URL so the browser joins the current edge
 rather than resuming a stale buffer. Pausing disconnects the audio element
 cleanly.
 
+If playback stalls while the listener still intends to listen, the receiver
+uses capped reconnect attempts and a progress watchdog. Browser focus, page
+visibility, network return and wake-from-sleep can trigger a guarded recovery
+check. An explicit pause always wins and is never treated as a failure to repair.
+
 Catalogue preview playback uses a separate audio element and is mutually
 exclusive with the live stream. Both remain stable across route changes.
 
@@ -125,10 +130,12 @@ Caddy.
 
 ## 8. Privacy
 
-The site currently has no PostHog embed, external font loader, analytics cookie,
+The site source has no PostHog embed, external font loader, analytics cookie,
 listener account or audience-tracking script. Saved stations, saved programmes
 and timezone preference remain in browser-local storage. It works entirely from
-first-party static assets, station JSON, and audio mounts.
+first-party static assets, station JSON, and audio mounts. The strict script
+policy also blocks an edge-injected analytics beacon unless it is deliberately
+reviewed and allowlisted.
 
 Ordinary request and stream metadata may still be handled by the tunnel/CDN,
 Caddy, Icecast, and the listener's network provider.
@@ -153,6 +160,8 @@ and secondary catalogue columns collapse on narrow screens.
 - Invalid JSON never replaces the prior complete feed.
 - Stale timing does not fabricate progress.
 - A missing catalogue or diary feed does not stop live playback.
+- A transient stream or browser suspension is retried only while listener intent
+  remains active, with bounded backoff and no parallel audio elements.
 - Private operational data is not available through a hidden route because it
   is never copied into the public build.
 

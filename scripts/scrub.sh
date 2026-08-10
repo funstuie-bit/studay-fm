@@ -9,7 +9,7 @@ cd "$(dirname "$0")/.."
 # Patterns that must never appear in the public tree.
 #  - private LAN IPs, absolute home paths, obvious secrets
 #  - em dashes and en dashes (house style: never)
-PATTERNS='192\.168\.[0-9]|10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]|/Users/[a-z]|/home/[a-z]+/|BEGIN (RSA|OPENSSH) PRIVATE KEY|sk-[a-zA-Z0-9]{20}|—|–'
+PATTERNS='192\.168\.[0-9]|10\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]|/Users/[a-z]|/Users/Shared/|/home/[a-z]+/|BEGIN (RSA|OPENSSH) PRIVATE KEY|sk-[a-zA-Z0-9]{20}|private Gitea|StudayFM-Bot|stdfmgeez|studio96|\.studayfm/|—|–'
 
 # Do not scan the repo plumbing, binaries, or this script's own pattern list.
 HITS=$(grep -rInE "$PATTERNS" . \

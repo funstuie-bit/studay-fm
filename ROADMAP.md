@@ -30,12 +30,16 @@ Complexity that does none of these should be deferred or removed.
 
 ## Near-term priorities
 
-1. Improve the musical identity and quality of StuLoFiDay and Tokyo Jazz.
-2. Complete listener acceptance of the redesigned public receiver.
-3. Give the AI manager progressively broader, reversible authority with clear
-   evidence and an owner emergency stop.
-4. Keep the public Studay FM repository focused on the live project, its sound,
-   presenters, website and public architecture.
+1. Review the track-aware programme-director shadow and, only if its choices are
+   enjoyable and dependable, trial a small reversible flagship canary.
+2. Improve station-fit admission and supplier evaluation for generated music so
+   new batches strengthen each dial's identity before entering rotation.
+3. Continue long-listen acceptance of the public receiver, especially mobile,
+   browser suspension and network recovery.
+4. Expand the AI manager through narrow, observable capabilities with receipts,
+   rollback and an owner emergency stop.
+5. Keep this public repository focused on the live project, its sound,
+   presenters, website and shareable architecture.
 
 ## A separate reusable AI radio project
 
