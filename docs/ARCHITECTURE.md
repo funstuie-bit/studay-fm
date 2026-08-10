@@ -42,7 +42,7 @@ intentionally omitted.
         |                    |
  authenticated ACE     bounded Chatterbox
 
- watchdog -> readiness -> typed read-only query -> owner / bounded LLM summaries
+ watchdog -> readiness -> typed capability broker -> owner / bounded LLM workflows
 ```
 
 ## Five stations, two playout styles
@@ -157,9 +157,10 @@ persists long enough to write an atomic exit receipt. If the worker restarts, it
 recognizes a live leased child or consumes the receipt; it does not blindly
 launch a duplicate generation.
 
-Queue mutation is equivalent to local command authority, so only trusted owner
-workflows may enqueue, retry, reprioritize, or remove work. The LLM-facing tools
-can read a bounded queue summary but cannot change it.
+Queue mutation is equivalent to local command authority, so general model-facing
+tools can read a bounded summary but cannot change it. Explicit owner-directed
+workflows may invoke a small allowlist of typed, reversible actions through a
+separate broker that validates exact targets and writes receipts.
 
 ## Music and voice services
 
@@ -214,25 +215,28 @@ make an LLM a fact-checker.
 
 ## Operations and model authority
 
-The canonical local operations surface is a typed, read-only CLI. Its commands
-return status, health, now-playing, queue summary, lane depth, talk stock, flags,
-and bounded tails of allowlisted logs.
+The canonical local operations surface is a typed capability broker. Its query
+side returns status, health, now-playing, queue summary, lane depth, talk stock,
+flags and bounded tails of allowlisted logs.
 
-The scheduled operator and private ops bot receive the same fixed station-query
-tool. Their model endpoint, request size, response size, step count, tool output,
-and session duration are bounded. They have no terminal, filesystem, browser,
-memory, queue, approval, generation, service-control, or deployment capability.
+The action side is separate. An explicit owner instruction may authorize one
+narrow, reversible operation with validated arguments, exact-target binding,
+expiry, idempotency and an audit receipt. It does not expose a terminal,
+arbitrary filesystem, deployment or unrestricted service-control interface.
 
-The project attempted a fully local coordinator before its tool behavior was
-reliable enough for safe mutation. Local inference is now separated from the raw
-model daemon by an authenticated loopback gateway. The gateway permits a small,
-size-bounded generation contract for an allowlisted model and rejects model
-management and other administration routes. A hosted provider may be used as a
-similarly bounded fallback.
+A deterministic self-repair policy may execute a pre-approved idempotent repair
+only after repeated matching evidence. It has a cooldown, attempt limit and
+postcondition check. The policy cannot invent new actions or broaden its own
+scope.
 
-Mutation remains an owner action. A future local coordinator should not gain
-mutation until tool reliability, account isolation, credentials, egress, and
-command policy have all been reviewed.
+Model endpoints, requests, responses, step counts, tool output and session
+duration remain bounded. Local inference is separated from raw model
+administration by an authenticated, inference-only gateway; a hosted provider
+can implement the same contract without receiving broader authority.
+
+Programme-direction experiments use another read-only boundary. They can propose
+exact approved assets and speech decisions, but the current shadow cannot alter
+live playout. See [Programme direction](programme-direction.md).
 
 ## Owner feedback and music iteration
 

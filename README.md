@@ -53,6 +53,8 @@ daily catalogue discoveries and an installable app shell. Preferences stay on
 the listener's device. There is no listener account or analytics profile, and
 live data and audio are never served from the offline cache.
 
+<img src="docs/images/receiver-mobile.png" alt="Studay FM mobile receiver" width="390">
+
 ## The presenters
 
 Studay FM uses fictional presenter characters with separate briefs, music lanes,
@@ -101,11 +103,11 @@ the private source clips.
                   |
        candidate -> fixed review policy -> technical QA -> approved
 
-  watchdog -> atomic readiness -> typed read-only station query
+  watchdog -> atomic readiness -> typed station capability broker
                                       |
-                       bounded operator / private ops bot
+                  observe | owner-authorized action | policy repair
                                       |
-                         observes and recommends only
+                  track-aware programme-director shadow
 ```
 
 The core safety property is **approved-only playout**. A generated file is not
@@ -134,8 +136,10 @@ watchdog evidence is missing, invalid, red, or stale.
 Expensive generation is serialized through a private, typed queue. Jobs store an
 argv array rather than a shell command, carry bounded attempts and timeouts, and
 use a lease plus exit receipt so a worker restart does not duplicate a live GPU
-job. Queue mutation is a trusted local owner action and is not exposed to an LLM
-or chat bot.
+job. Queue mutation remains outside general model access. A narrow capability
+broker can execute a small allowlist of reversible actions after an explicit
+owner instruction, with typed arguments, exact-target checks, receipts and an
+audit trail.
 
 ## The model boundary
 
@@ -146,16 +150,22 @@ required bounded generation route for an allowlisted model; model-management,
 pull, delete, filesystem, and raw administration routes are not forwarded.
 That interchangeability does not grant the model operational authority.
 
-The goal remains a fully autonomous AI station manager. In practice, earlier local
-coordination was not reliable enough for safe mutation. Both the scheduled
-operator and the private ops bot therefore receive one typed, read-only
-station-query tool. They cannot run a shell, edit files, approve media, enqueue
-generation, restart services, or deploy code. A hosted provider can remain a
-bounded fallback without receiving broader tools.
+The goal remains a fully autonomous AI station manager. The model can inspect a
+typed station view. When the owner gives a direct instruction, a separate broker
+may authorize one narrowly defined, reversible action such as retiring the exact
+track currently identified by the station. The broker, not the model, validates
+the target, applies policy and records the result. It provides no shell,
+arbitrary filesystem, deployment or unrestricted service-control access.
 
-Authority will expand in tested, reversible steps as local tool use and recovery
-become dependable. The point of the safety boundary is to make autonomy durable,
-not to turn a hobby radio station into a permanent manual operations job.
+One repetitive repair path can also run without a fresh owner message, but only
+after repeated matching evidence and only for a pre-approved idempotent repair.
+This is deterministic policy automation rather than free-form model authority.
+
+In parallel, a track-aware programme-director shadow receives the real current
+show, recent history and an approved shortlist, then proposes exact assets and
+speech decisions against a strict schema. Its proposals are recorded for review
+and do not yet alter live playout. Authority expands through reviewed,
+reversible stages so autonomy becomes dependable rather than another manual job.
 
 ## Internal generation boundaries
 
@@ -181,13 +191,13 @@ not to turn a hobby radio station into a permanent manual operations job.
 |---|---|
 | Music generation | [ACE-Step](https://github.com/ace-step/ACE-Step), behind an authenticated bounded service |
 | Presenter speech | [Chatterbox TTS](https://github.com/resemble-ai/chatterbox), reference-conditioned and serialized |
-| Writing and summaries | OpenAI-compatible LLM calls, currently with a bounded DeepSeek fallback |
+| Writing and summaries | Bounded OpenAI-compatible calls to local or hosted providers |
 | Scheduling and state | Python, validated schemas, atomic publication |
 | Playout | [Liquidsoap](https://www.liquidsoap.info/), continuous normalized MP3 |
 | Stream origin | [Icecast](https://icecast.org/), loopback-only behind the tunnel |
 | Site origin | [Caddy](https://caddyserver.com/), loopback-only and allowlist-served |
 | Public ingress | [Cloudflare Tunnel](https://www.cloudflare.com/products/tunnel/), outbound-only |
-| Operations | Per-component supervision, watchdog, readiness, typed read-only CLI |
+| Operations | Per-component supervision, watchdog, readiness, typed capability broker |
 | Supply chain | Frozen environments, OSV review, secret scanning, SBOMs, CI gates |
 
 Owner music feedback is recorded in a bounded append-only ledger against the
@@ -208,15 +218,17 @@ scheduled job does not delete media.
 - **About 17** fictional presenter and continuity roles
 - **Hundreds** of generated tracks across many show-specific lanes
 - **1** source-attributed music-and-culture bulletin workflow
-- **1** typed read-only operational view shared by the CLI, operator, and private bot
-- **0** model-accessible mutation tools at the current autonomy stage
+- **1** typed operational view shared across human and model-facing workflows
+- **1** bounded owner-authorized action broker for small reversible changes
+- **1** evidence-gated deterministic repair policy
+- **1** track-aware programme-director shadow with no live queue authority
 
 ## Read the deep dives
 
 Start with the [Roadmap](ROADMAP.md) and [Architecture](docs/ARCHITECTURE.md), then read the
 [Phase 5 quality and safety summary](docs/phase-5.md) or use the
 [deep-dive index](docs/README.md) for the station engine, music, voices, talk,
-news, site, serving, continuity, and reliability. The small public demo remains
+programme direction, news, site, serving, continuity, and reliability. The small public demo remains
 documented separately in [SETUP.md](SETUP.md).
 
 ## Current Docker demo

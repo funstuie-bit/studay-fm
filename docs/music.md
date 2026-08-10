@@ -113,9 +113,10 @@ The worker persists one supervisor per active job. If the worker restarts while
 generation continues, it recognizes the leased process instead of launching
 another GPU task.
 
-The queue is a trusted local administrative interface. The scheduled operator,
-private bot, public site, and model prompts can read only a summary; they cannot
-add, retry, reprioritize, or remove work.
+The queue is a trusted local administrative interface. The public site and model
+prompts can read only a summary; they cannot add, retry, reprioritize, or remove
+work. Any owner-authorized queue action belongs behind a separate typed and
+audited capability.
 
 ## 6. Vocal and instrumental requests
 
@@ -184,7 +185,7 @@ The cache stores a fingerprint of the exact file. Any later modification
 invalidates the pass.
 
 Only policy-approved, technically current files can enter the atomic manifest.
-The model and read-only operator have no approval capability.
+Models and the operational query surface have no approval capability.
 
 ## 10. Candidate preview and owner feedback
 

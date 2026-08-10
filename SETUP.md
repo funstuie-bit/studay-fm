@@ -89,7 +89,7 @@ private queue + fixed producers
  |
 ACE-Step and Chatterbox
 
-watchdog -> readiness -> typed read-only CLI/operator/bot
+watchdog -> readiness -> typed capability broker
 ```
 
 The current Studay FM network has five station roles:
@@ -126,7 +126,7 @@ shell remains broad authority even when wrapped in prompt rules.
 | Music node | ACE-Step behind an authenticated bounded service | Single-flight accelerator workload |
 | Speech node | Chatterbox CLI or authenticated bounded service | Private references, serialized renders |
 | Writing provider | Local or hosted OpenAI-compatible endpoint | Content generation only |
-| Operations model | Local or hosted endpoint | Typed read-only station query only |
+| Operations model | Local or hosted endpoint | Typed query plus separately allowlisted owner actions |
 
 Typical stream-origin prerequisites:
 
@@ -366,7 +366,7 @@ Emit alerts only on boolean transitions. Write watchdog state and readiness
 atomically. Serve readiness as failed when evidence is missing, invalid, red, or
 stale.
 
-### 13. Add typed read-only operations
+### 13. Add typed operations
 
 Expose a local CLI with a fixed command set:
 
@@ -378,16 +378,16 @@ Expose a local CLI with a fixed command set:
 - owner flags;
 - bounded tails of allowlisted logs.
 
-The LLM-facing operator and private ops bot should receive only the same typed
-query capability. Do not provide terminal, filesystem, browser, queue, approval,
-generation, restart, or deployment tools.
+Models should begin with the same typed query capability. Do not provide a
+terminal, arbitrary filesystem, browser, approval, deployment or unrestricted
+service-control tool.
 
-Studay FM originally aimed for a local self-governing coordinator. The local
-coordinator and earlier local-model Hermes configuration were not reliable
-enough for safe tool use. The current private Hermes gateway uses a bounded
-DeepSeek fallback to observe and recommend. Mutation remains owner-controlled.
+If owner-directed actions are added, put them behind a separate allowlist with
+exact-target validation, expiry, idempotency, receipts and rollback. Automated
+repair should be deterministic, pre-authorized and triggered only by repeated
+matching evidence with a cooldown and postcondition check.
 
-Revisit local coordination only after:
+Broaden coordination only after:
 
 - reliable typed tool use;
 - dedicated non-admin service account;
@@ -428,7 +428,7 @@ For a new multi-station build:
    canaries;
 9. deploy news;
 10. deploy watchdog/readiness;
-11. deploy the typed read-only operator and private bot last.
+11. deploy typed model-facing capabilities last.
 
 After each step, verify the existing mounts still advance. Do not turn one
 component rollout into a blanket restart.

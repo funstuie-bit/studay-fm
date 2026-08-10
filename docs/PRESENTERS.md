@@ -102,7 +102,9 @@ than being layered ambiguously on top of it.
 ## Continuity and the other dials
 
 - **The Signalman** is Studay FM's continuity voice and diary character. It marks
-  transitions and summarizes real station state; it does not control services.
+  transitions and summarizes real station state. A separate read-only shadow now
+  evaluates track-aware programme choices under the same identity, but it does
+  not yet control live playout or services.
 - **The Captain** hosts Yacht Zone with sparse links around its day/night music
   change.
 - **Airelle** carries C'est Magnifistu between tracks without turning the flow
@@ -121,10 +123,10 @@ review policy, and included in an approved manifest before it can air. Recurring
 speech can be approved automatically after those validators pass; the model
 itself has no approval capability.
 
-The private operations model does not write or approve presenter material by
-issuing shell commands. Scheduled producers and trusted owner workflows invoke
-fixed pipeline entry points; the operator and ops bot can only inspect bounded
-station state.
+The operations model does not write or approve presenter material by issuing
+shell commands. Scheduled producers and trusted owner workflows invoke fixed
+pipeline entry points; operational actions use a separate typed capability
+boundary.
 
 Fictional characters are not affiliated with or endorsed by any real person who
 may have informed a broad creative reference.

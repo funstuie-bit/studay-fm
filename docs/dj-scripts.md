@@ -47,12 +47,9 @@ local or hosted, but the call is still bounded:
 - no tool access;
 - no station mutation authority.
 
-The earlier local coordinator and local-model Hermes configuration were not
-reliable enough to run operational tools safely. The current private Hermes
-gateway uses DeepSeek within fixed workflows, while the separate operator
-surface remains read-only.
-
-Changing provider does not change these capability limits.
+Local and hosted providers can implement the same fixed writing contract.
+Changing provider does not change these capability limits or grant access to
+raw model administration.
 
 ## 3. Prompt construction
 
@@ -148,13 +145,23 @@ remain private.
 
 ## 9. Operations separation
 
-The typed station operator is not the scriptwriter's shell. It can inspect
-health, now-playing, queue summary, lanes, talk stock, and flags through one
-validated read-only tool.
+The typed station capability broker is not the scriptwriter's shell. Writing
+prompts receive no operational tools.
 
 Script production is invoked by fixed scheduled jobs or trusted local queue
-commands. Approval, retries, configuration changes, and service control remain
-owner actions.
+commands. Any owner-authorized operational action travels through a separate,
+allowlisted and audited workflow.
+
+## 10. Track-aware links
+
+For programmes that talk about records, the schedule can select the music first
+and pass the exact adjacent track identifiers into the writing brief. The script
+sidecar records that binding, and schedule assembly rejects a mismatch. This
+lets a fictional host tell a character-consistent story about what will actually
+play without giving the model control of the library or queue.
+
+The same exact-asset principle underpins the read-only programme-director shadow
+described in [Programme direction](programme-direction.md).
 
 From the accepted script sidecar, continue to the
 [talk pipeline](talk-pipeline.md) and [voice renderer](voices.md).

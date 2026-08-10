@@ -52,7 +52,7 @@ Current producers invoke fixed Python entry points with argv arrays. They can:
 4. run technical QA;
 5. publish manifests after explicit approvals already exist.
 
-The read-only operator and private ops bot can report stock and freshness, but
+The typed operations view can report stock and freshness, but
 cannot invoke these steps, enqueue a job, approve a clip, or restart a producer.
 
 ## 3. Rendering
@@ -156,7 +156,7 @@ The queue runs one supervisor/command child at a time and records lease identity
 plus an exit receipt. Restarting the worker does not duplicate a live render.
 
 Because enqueueing is command authority, queue mutation stays local and trusted.
-Models see only the bounded read-only summary.
+Writing models see only the bounded read-only summary.
 
 ## 9. Failure detection
 
