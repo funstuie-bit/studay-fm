@@ -106,8 +106,9 @@ the private source clips.
   watchdog -> atomic readiness -> typed station capability broker
                                       |
                   observe | owner-authorized action | policy repair
-                                      |
-                  track-aware programme-director shadow
+
+  local track-aware presenter writer -> speech QA -> exact talk/track pairs
+  separate programme-director shadow -> reviewed proposals only
 ```
 
 The core safety property is **approved-only playout**. A generated file is not
@@ -161,11 +162,19 @@ One repetitive repair path can also run without a fresh owner message, but only
 after repeated matching evidence and only for a pre-approved idempotent repair.
 This is deterministic policy automation rather than free-form model authority.
 
-In parallel, a track-aware programme-director shadow receives the real current
-show, recent history and an approved shortlist, then proposes exact assets and
-speech decisions against a strict schema. Its proposals are recorded for review
-and do not yet alter live playout. Authority expands through reviewed,
-reversible stages so autonomy becomes dependable rather than another manual job.
+Fourteen flagship presenters now have a bounded local track-aware writing route.
+The writer receives one exact approved record and produces candidate text only.
+After speech and technical QA, the accepted link stores hashes for both the
+music and its sidecar. Scheduling and live selection verify those hashes and
+keep the link plus named record together as one pair. A changed or retired track
+drops the link and music continues. The presenter model cannot approve media,
+edit a schedule or control playout.
+
+A separate programme-director shadow still receives the real current show,
+recent history and an approved shortlist, then proposes exact assets and speech
+decisions against a strict schema. Those proposals remain review-only and do
+not alter live playout. Presenter writing has therefore advanced to a guarded
+live role while the broader station controller has not.
 
 ## Internal generation boundaries
 
@@ -217,11 +226,12 @@ scheduled job does not delete media.
 - **5** continuously available stations
 - **About 17** fictional presenter and continuity roles
 - **Hundreds** of generated tracks across many show-specific lanes
+- **52** initially approved local track-aware presenter links bound to exact records
 - **1** source-attributed music-and-culture bulletin workflow
 - **1** typed operational view shared across human and model-facing workflows
 - **1** bounded owner-authorized action broker for small reversible changes
 - **1** evidence-gated deterministic repair policy
-- **1** track-aware programme-director shadow with no live queue authority
+- **1** separate programme-director shadow with no live queue authority
 
 ## Read the deep dives
 

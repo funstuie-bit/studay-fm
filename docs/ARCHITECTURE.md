@@ -43,6 +43,8 @@ intentionally omitted.
  authenticated ACE     bounded Chatterbox
 
  watchdog -> readiness -> typed capability broker -> owner / bounded LLM workflows
+
+ exact approved record -> local presenter candidate -> speech QA -> atomic talk/track pair
 ```
 
 ## Five stations, two playout styles
@@ -142,6 +144,15 @@ guess, drives now-playing and the progress bar. Flow stations publish the same
 contract from their real track-change callbacks. This gives the website and
 operator one consistent definition of what is audible.
 
+Track-aware presenter links add a stricter rule. Candidate text names one exact
+approved next record. Its sidecar binds the music file and music metadata by
+hash. The scheduler admits only a current binding and places the talk plus music
+as an atomic pair; the live selector verifies it again immediately before use.
+Bulletins cannot split the pair. If anything has changed, the link is omitted
+and approved music continues. Fourteen flagship presenters currently use this
+guarded local writing route. It does not grant the writer approval, scheduling
+or playout authority.
+
 ## Generation queue v2
 
 Expensive jobs are private, typed, and single-flight. A job record contains:
@@ -236,7 +247,9 @@ can implement the same contract without receiving broader authority.
 
 Programme-direction experiments use another read-only boundary. They can propose
 exact approved assets and speech decisions, but the current shadow cannot alter
-live playout. See [Programme direction](programme-direction.md).
+live playout. The first long observation proved the contract but mostly chose
+silence, so no controller canary was promoted. See
+[Programme direction](programme-direction.md).
 
 ## Owner feedback and music iteration
 

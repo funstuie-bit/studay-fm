@@ -1,20 +1,21 @@
 # Deep dive: track-aware programme direction
 
-Studay FM is moving from isolated script generation toward an AI programme
-director that understands the actual sequence around a presenter link. The
-current stage is deliberately observable: it proposes decisions against real
-approved media while deterministic playout remains authoritative.
+Studay FM now separates two related jobs: a live, guarded presenter writer that
+knows the exact record it is introducing, and a broader programme-director
+experiment that still proposes decisions without changing playout.
 
 ```text
 current show + recent history + approved shortlist
                          |
-              bounded programme brief
-                         |
-             exact-asset structured proposal
-                         |
-       validate identifiers, order, speech and limits
-                         |
-                 reviewable shadow record
+       +-----------------+-----------------+
+       |                                   |
+exact next record                   approved shortlist
+       |                                   |
+local presenter candidate           director proposal
+       |                                   |
+speech and technical QA             strict validation
+       |                                   |
+verified talk/track pair             review-only record
 ```
 
 ## Track-aware presenter links
@@ -26,9 +27,16 @@ that really follows, rather than producing a convincing link beside an unrelated
 track.
 
 The binding is mechanical. The validated script sidecar records the intended
-track identity, and schedule assembly rejects a mismatch. If generation fails,
-the station falls back to music or a safe generic link rather than inventing a
-relationship.
+track path plus hashes for the music and its metadata. Schedule assembly checks
+both, places the talk and exact track as one pair, and live selection verifies
+them again. A bulletin cannot split the pair. If the record changes, retires or
+fails validation, the link is dropped and approved music continues.
+
+This route is live for fourteen flagship presenters. It began with 52 approved
+links, and the first naturally reached production pair was observed introducing
+and then playing the exact named record. The Captain remains on the existing
+Yacht Zone route until that independent flow scheduler can enforce the same
+pairing rule.
 
 ## Programme-director contract
 
@@ -45,17 +53,18 @@ speech or silence decision, a reason code, and an optional short session note.
 Unknown IDs, duplicates, invalid order, overlong notes and speech-policy
 violations fail validation.
 
-## Shadow before authority
+## Programme-director shadow
 
-The live shadow runs beside normal scheduling and records what it would have
+The director shadow runs beside normal scheduling and records what it would have
 chosen. It cannot enqueue media, edit manifests, restart services or change the
 live schedule. Cloud and local models can be evaluated against the same contract
 without changing their permissions.
 
 Review asks practical radio questions: did it choose coherent records, avoid
 repetition, respect the host's lane, use silence well and make the programme more
-enjoyable? Only a consistently useful shadow should advance to a small queued
-canary with an immediate deterministic fallback and owner stop.
+enjoyable? The first long shadow was mechanically stable but overwhelmingly
+chose silence, so it did not earn a live canary. The next version needs stronger
+show-aware creative behaviour before authority is reconsidered.
 
 ## Capability boundary
 
