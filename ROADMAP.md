@@ -30,16 +30,18 @@ Complexity that does none of these should be deferred or removed.
 
 ## Near-term priorities
 
-1. Review the track-aware programme-director shadow and, only if its choices are
-   enjoyable and dependable, trial a small reversible flagship canary.
-2. Improve station-fit admission and supplier evaluation for generated music so
+1. Improve the newly live track-aware presenter writing: add more variety, refine
+   difficult character briefs, and extend exact pairing to The Captain on Yacht
+   Zone.
+2. Move suitable routine writing from hosted models to reviewed local models,
+   starting with sourced news behind the same deterministic editorial gate.
+3. Redesign the programme-director experiment around show-aware, audible choices;
+   its existing shadow remains review-only and has not earned live control.
+4. Improve station-fit admission and supplier evaluation for generated music so
    new batches strengthen each dial's identity before entering rotation.
-3. Continue long-listen acceptance of the public receiver, especially mobile,
-   browser suspension and network recovery.
-4. Expand the AI manager through narrow, observable capabilities with receipts,
-   rollback and an owner emergency stop.
-5. Keep this public repository focused on the live project, its sound,
-   presenters, website and shareable architecture.
+5. Continue long-listen acceptance of the public receiver and expand the AI
+   manager only through observable capabilities with receipts, rollback and an
+   owner emergency stop.
 
 ## A separate reusable AI radio project
 
