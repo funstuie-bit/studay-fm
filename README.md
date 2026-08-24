@@ -176,6 +176,39 @@ decisions against a strict schema. Those proposals remain review-only and do
 not alter live playout. Presenter writing has therefore advanced to a guarded
 live role while the broader station controller has not.
 
+## The local operations agent
+
+Production also has an interactive local operations agent for routine station
+work. It runs through the Pi coding-agent harness against an owner-hosted Qwen
+model, so normal audits, planning and maintenance conversations do not require
+a metered cloud model. It is an engineering operator rather than an on-air DJ:
+it does not write live continuity or independently choose what listeners hear.
+
+The agent has three deliberately separate modes:
+
+- **Audit** can inspect bounded station health, current tracks, schedules,
+  catalogue state, review packages and generation-worker availability.
+- **Plan** can turn an exact request into a dry-run design without changing the
+  station.
+- **Maintain** can prepare private generation batches, build review and naming
+  packages, run existing tested import procedures and perform routine repairs
+  after an exact owner instruction.
+
+Typed observation tools keep model context small and remove private paths from
+ordinary results. The client starts with a minimal environment, records guarded
+actions, and requires an interactive confirmation before any shell command.
+Destructive Git operations, credential access, privilege escalation, package or
+network changes, host power actions and public pushes are blocked. Source work
+is isolated from the live runtime checkout and still passes the normal tests and
+protected review workflow before deployment.
+
+An owner's exact instruction is the approval for that exact operation; command
+confirmation is execution visibility rather than a request to approve the same
+decision twice. Scope cannot silently expand to files added later. Generated
+music remains private candidate material until it has been listened to and
+accepted, and complex architecture, security, provider or recovery changes stay
+outside the local agent's authority.
+
 ## Internal generation boundaries
 
 - **ACE-Step** runs as an authenticated, single-flight music service. The client
