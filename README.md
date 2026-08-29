@@ -142,6 +142,38 @@ broker can execute a small allowlist of reversible actions after an explicit
 owner instruction, with typed arguments, exact-target checks, receipts and an
 audit trail.
 
+## The part AI cannot hear
+
+The uncomfortable lesson from rebuilding the music library was simple: an AI
+can generate audio and inspect its metadata, but it cannot reliably listen to a
+record as a person does. A file can decode correctly, have a plausible duration,
+normal loudness and a perfectly ordinary sidecar, then turn into a glitching,
+broken or incoherent mess halfway through. To the automated checks it is still a
+valid music file. To a listener it can be ear torture.
+
+Over several weeks the owner auditioned roughly two thousand generated tracks
+across ACE-Step and other generation routes. Broken renders were rejected, the
+prompts were rewritten, larger batches were generated, and the usable results
+were listened to again before entering the station. Plenty of technically sound
+tracks were also rejected simply because they were not enjoyable or because,
+after hundreds of auditions, superficially different AI songs began to feel
+remarkably repetitive. That is a taste decision, not a file-validation failure.
+
+This does not make the project any less AI-run: the music is AI-generated, the
+presenters and continuity are AI-written and rendered, and AI agents operate and
+maintain the station within bounded authority. The human remains in the loop at
+the sensory boundary the automation cannot yet pass. The resulting prompt
+library is now much more dependable, and the next experiment is whether proven
+recipes can move from exhaustive track-by-track listening to a lighter sampled
+audit. That transition has not been declared solved yet.
+
+There was also a practical hardware result. In Studay FM's own ACE-Step batches,
+a single NVIDIA RTX 3090 completed generation substantially faster than the M3
+Max Apple backend and produced a higher human acceptance rate. This is an
+observation from this model, configuration and prompt library, not a general
+CUDA-versus-Apple benchmark, but it changed where the station performs bulk
+music generation.
+
 ## The model boundary
 
 Text generation speaks an OpenAI-compatible API, so writing tasks can use a
@@ -259,6 +291,7 @@ scheduled job does not delete media.
 - **5** continuously available stations
 - **About 17** fictional presenter and continuity roles
 - **Hundreds** of generated tracks across many show-specific lanes
+- **Roughly 2,000** generated candidates auditioned while rebuilding and tuning the music libraries
 - **52** initially approved local track-aware presenter links bound to exact records
 - **1** source-attributed music-and-culture bulletin workflow
 - **1** typed operational view shared across human and model-facing workflows

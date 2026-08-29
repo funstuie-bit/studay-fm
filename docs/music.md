@@ -184,6 +184,25 @@ Technical QA then checks:
 The cache stores a fingerprint of the exact file. Any later modification
 invalidates the pass.
 
+Technical QA proves that the file is structurally usable; it does not prove that
+the music remains coherent or pleasant from beginning to end. During the major
+library rebuild, some candidates decoded cleanly and passed duration, silence,
+loudness and peak checks but developed audible glitches, malformed transitions
+or musical breakdowns later in the track. Other candidates were technically
+fine but were rejected for taste or because large batches became too repetitive.
+
+The owner therefore auditioned roughly two thousand candidates across the
+project's generation routes while revising the prompt library. The major
+replacement and replenishment batches used explicit human listening as their
+acceptance gate. The project may test sampled review for recipes that sustain a
+high acceptance yield, but that is a future operating policy rather than an
+assumption that automated QA can hear the music.
+
+For this project's ACE-Step workload, the single RTX 3090 backend was materially
+faster than the M3 Max Apple backend and its batches produced fewer human
+rejections. That is a project observation tied to the tested model,
+configuration and prompts, not a general hardware benchmark.
+
 Only policy-approved, technically current files can enter the atomic manifest.
 Models and the operational query surface have no approval capability.
 
