@@ -4,7 +4,21 @@ These pages describe the production design without publishing a private
 deployment. The deep dives are flattened directly into `docs/` in this public
 repository.
 
-Start with the [project direction](../ROADMAP.md) and [Architecture](ARCHITECTURE.md), then choose a subsystem:
+Start with the [project direction](../ROADMAP.md) and
+[Architecture](ARCHITECTURE.md). The focused guides answer one question each:
+
+| Page | What it covers |
+|---|---|
+| [Production flow](production-flow.md) | Full station diagram, approved media, atomic manifests and atomic public state |
+| [Model authority](model-authority.md) | Observation tools, owner-authorised actions, receipts and bounded repair |
+| [Operations agent](operations-agent.md) | Audit, Plan and Maintain modes, confirmation and blocked operations |
+| [Generation boundaries](generation-boundaries.md) | ACE-Step, Chatterbox, text generation, news input and the private queue |
+| [Hardware note](hardware-note.md) | What the RTX 3090 and M3 Max result showed, and what was never measured |
+| [Receiver guide](receiver-guide.md) | The five-station listener experience, player, schedule, catalogue, saved items and privacy |
+| [Voice provenance](voice-provenance.md) | Creative intent, private rights records, reference handling and withdrawal |
+| [Docker demo safety](demo-safety.md) | Passwords, ports, remote services, public exposure and always-on setup |
+
+The deeper subsystem pages contain the implementation detail:
 
 | Page | What it covers |
 |---|---|
