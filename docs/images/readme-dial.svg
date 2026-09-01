@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="340" viewBox="0 0 1600 340" role="img" aria-labelledby="title desc">
+  <title id="title">The five Studay FM stations on a radio dial</title>
+  <desc id="desc">Five peaks across a dark receiver dial represent Studay FM, StuLoFiDay, Yacht Zone, Tokyo Jazz and C'est Magnifistu.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#07150f"/><stop offset="1" stop-color="#090806"/></linearGradient>
+    <filter id="glow"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    <pattern id="scan" width="5" height="5" patternUnits="userSpaceOnUse"><path d="M0 4.5H5" stroke="#43d7b0" stroke-opacity=".08"/></pattern>
+  </defs>
+  <rect x="1" y="1" width="1598" height="338" rx="22" fill="url(#bg)" stroke="#49391f"/>
+  <rect x="1" y="1" width="1598" height="338" rx="22" fill="url(#scan)"/>
+  <text x="52" y="50" fill="#9b907d" font-family="monospace" font-size="15" font-weight="700" letter-spacing="4">TUNE THE BAND · FIVE LIVE STREAMS</text>
+  <text x="1548" y="50" fill="#f1a82f" text-anchor="end" font-family="monospace" font-size="15" font-weight="700" letter-spacing="3">STUDAY ∞.∞ FM</text>
+  <g fill="#9b681d">
+    <rect x="62" y="202" width="18" height="34" rx="3"/><rect x="88" y="188" width="18" height="48" rx="3"/><rect x="114" y="174" width="18" height="62" rx="3"/><rect x="140" y="161" width="18" height="75" rx="3"/><rect x="166" y="151" width="18" height="85" rx="3"/><rect x="192" y="159" width="18" height="77" rx="3"/><rect x="218" y="177" width="18" height="59" rx="3"/><rect x="244" y="199" width="18" height="37" rx="3"/>
+    <rect x="348" y="211" width="18" height="25" rx="3"/><rect x="374" y="198" width="18" height="38" rx="3"/><rect x="400" y="184" width="18" height="52" rx="3"/><rect x="426" y="168" width="18" height="68" rx="3"/><rect x="452" y="151" width="18" height="85" rx="3"/><rect x="478" y="133" width="18" height="103" rx="3"/><rect x="504" y="151" width="18" height="85" rx="3"/><rect x="530" y="176" width="18" height="60" rx="3"/>
+    <rect x="636" y="207" width="18" height="29" rx="3"/><rect x="662" y="190" width="18" height="46" rx="3"/><rect x="688" y="171" width="18" height="65" rx="3"/><rect x="714" y="147" width="18" height="89" rx="3"/><rect x="740" y="122" width="18" height="114" rx="3"/><rect x="766" y="139" width="18" height="97" rx="3"/><rect x="792" y="163" width="18" height="73" rx="3"/><rect x="818" y="190" width="18" height="46" rx="3"/>
+    <rect x="924" y="212" width="18" height="24" rx="3"/><rect x="950" y="198" width="18" height="38" rx="3"/><rect x="976" y="181" width="18" height="55" rx="3"/><rect x="1002" y="160" width="18" height="76" rx="3"/><rect x="1028" y="139" width="18" height="97" rx="3"/><rect x="1054" y="153" width="18" height="83" rx="3"/><rect x="1080" y="176" width="18" height="60" rx="3"/><rect x="1106" y="202" width="18" height="34" rx="3"/>
+    <rect x="1212" y="207" width="18" height="29" rx="3"/><rect x="1238" y="192" width="18" height="44" rx="3"/><rect x="1264" y="174" width="18" height="62" rx="3"/><rect x="1290" y="151" width="18" height="85" rx="3"/><rect x="1316" y="127" width="18" height="109" rx="3"/><rect x="1342" y="145" width="18" height="91" rx="3"/><rect x="1368" y="169" width="18" height="67" rx="3"/><rect x="1394" y="196" width="18" height="40" rx="3"/>
+  </g>
+  <g filter="url(#glow)">
+    <rect x="166" y="151" width="18" height="85" rx="3" fill="#de4e78"/><rect x="192" y="159" width="18" height="77" rx="3" fill="#de4e78"/>
+    <rect x="478" y="133" width="18" height="103" rx="3" fill="#417de0"/><rect x="504" y="151" width="18" height="85" rx="3" fill="#417de0"/>
+    <rect x="740" y="122" width="18" height="114" rx="3" fill="#43b99b"/><rect x="766" y="139" width="18" height="97" rx="3" fill="#43b99b"/>
+    <rect x="1028" y="139" width="18" height="97" rx="3" fill="#df5838"/><rect x="1054" y="153" width="18" height="83" rx="3" fill="#df5838"/>
+    <rect x="1316" y="127" width="18" height="109" rx="3" fill="#8e79d8"/><rect x="1342" y="145" width="18" height="91" rx="3" fill="#8e79d8"/>
+  </g>
+  <path d="M52 245H1548" stroke="#49391f"/>
+  <g font-family="Arial, sans-serif" font-size="19" font-weight="700" text-anchor="middle">
+    <text x="181" y="283" fill="#de4e78">Studay FM</text><text x="493" y="283" fill="#417de0">StuLoFiDay</text><text x="755" y="283" fill="#43b99b">Yacht Zone</text><text x="1043" y="283" fill="#df5838">Tokyo Jazz</text><text x="1331" y="283" fill="#8e79d8">C’est Magnifistu</text>
+  </g>
+  <g fill="#716654" font-family="monospace" font-size="12" letter-spacing="2" text-anchor="middle">
+    <text x="181" y="309">FLAGSHIP</text><text x="493" y="309">FOCUS</text><text x="755" y="309">COAST</text><text x="1043" y="309">NIGHT</text><text x="1331" y="309">ECLECTIC</text>
+  </g>
+</svg>

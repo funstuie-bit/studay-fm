@@ -6,9 +6,15 @@ Five live radio stations, hundreds of invented records and a cast of fictional
 presenters. Machines generate the content, run the schedules and keep everything
 on air.
 
-### [Listen live at studayfm.com](https://studayfm.com)
+<a href="https://studayfm.com"><img src="docs/images/readme-hero.webp" alt="Studay FM: five stations, seventeen voices, radio that never sleeps"></a>
 
-![Studay FM live receiver](docs/images/hero.png)
+<p align="center">
+  <strong><a href="https://studayfm.com">▶ LISTEN LIVE</a></strong>
+  &nbsp;·&nbsp;
+  <strong><a href="docs/audio/studayfm-one-minute.mp3">HEAR ONE MINUTE OF STUDAY FM</a></strong>
+</p>
+
+![Five live stations, seventeen fictional voices, broadcasting around the clock with 100% generated music and roughly 2,000 tracks auditioned](docs/images/readme-facts.svg)
 
 Studay FM is a hobby project exploring how far an AI-managed radio network can
 go without losing the part that makes radio worth listening to. It runs around
@@ -16,6 +22,8 @@ the clock, follows a real schedule and broadcasts shared live streams: press
 play and you join whatever is on air, already in progress.
 
 ## Turn the dial
+
+![The five Studay FM stations on a radio dial](docs/images/readme-dial.svg)
 
 | Station | On air |
 |---|---|
@@ -29,6 +37,8 @@ Each is its own continuous station, not a playlist or a personalised stream.
 Together they make one permanently tunable network.
 
 ## Voices in the machine
+
+![The Duke, Downtown, The Instigator, The Archivist, The Rambler and Offshore Ghost](docs/images/readme-presenters.webp)
 
 Studay FM has a resident cast of fictional radio characters, each with a
 programme, musical lane, schedule, artwork and way of speaking.
@@ -84,6 +94,7 @@ For the machinery, safeguards and less glamorous details, see the
 ## Explore the station
 
 - [Listen live](https://studayfm.com)
+- [Hear the one-minute station sampler](docs/audio/studayfm-one-minute.mp3)
 - [Meet the presenters](docs/PRESENTERS.md)
 - [See where the project is going](ROADMAP.md)
 - [Read the technical deep dives](docs/README.md)
