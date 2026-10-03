@@ -6,7 +6,7 @@ Five live radio stations, hundreds of invented records and a cast of fictional
 presenters. Machines generate the content, run the schedules and keep everything
 on air.
 
-<a href="https://studayfm.com"><img src="docs/images/readme-hero.webp" alt="Studay FM's live claymation receiver: five stations, eighteen fictional voices"></a>
+<a href="https://studayfm.com"><img src="docs/images/readme-hero.gif" width="960" alt="Studay FM in clay: five live stations, fictional DJs and the machine's diary. Made by machines, cleared by human ears."></a>
 
 <p align="center">
   <strong><a href="https://studayfm.com">▶ LISTEN LIVE</a></strong>
