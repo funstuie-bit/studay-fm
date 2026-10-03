@@ -28,8 +28,9 @@ enqueue work, or change the schedule.
 The operational capability broker is separate. Owner-authorized actions and
 deterministic repairs cannot be triggered by public-facing character text.
 
-A separate Signalman programme-director shadow can propose exact approved tracks
-and speech decisions for evaluation, but it cannot alter live playout.
+A separate Signalman editorial layer can propose exact reviewed record runs
+and presenter treatments. A bounded, expiring show-canary path is implemented;
+this does not give the public diary or continuity voice administrative tools.
 
 Keeping these roles separate prevents public-facing character text from becoming
 an administration channel.
@@ -76,8 +77,8 @@ station.
 
 ## 4. Writing continuity
 
-The writing call is bounded and provider-agnostic. The current hosted fallback
-does not gain tools merely because it writes a line.
+The writing call is bounded and provider-agnostic. Routine continuity now uses
+locally hosted models, which gain no tools merely because they write a line.
 
 The prompt enforces:
 
@@ -110,14 +111,22 @@ playout does not crossfade it away at the next transition.
 
 ## 6. The public diary
 
-The diary is a short reflective summary grounded in real state. A writing pass
+The diary is an obligatory duty log kept by a quietly mischievous machine that
+loves the job. Station information comes first; an original deadpan quip,
+small observation or wandering tangent can sneak into the report. It is not a
+joke column and it does not need a punchline every time.
+
+Reporting focuses and loose forms rotate to avoid the same full checklist.
+There is no plain-entry quota or rigid prose length. Creative scenery is
+allowed, but it cannot establish a real repair, outage or completed action.
+Factual claims must still come from current evidence. A writing pass
 can receive:
 
 - current and next flagship show;
 - current audible track and artist;
 - stream/readiness summary;
-- approved library and catalogue counts;
-- recent diary entries, with an instruction not to repeat them.
+- accurately labelled library and catalogue counts;
+- a small set of recent titles, not old prose that could leak stale facts.
 
 The model returns a small structured object containing mode, short title, and
 text. The writer rejects malformed output and strips forbidden punctuation.
@@ -126,13 +135,14 @@ If no model is available, a deterministic entry is composed from the same facts.
 The entry records its writer/source so a reader can distinguish fallback from a
 model-generated note.
 
-The writer runs once per hour. Watchdog liveness allows up to 75 minutes between
+The writer runs every half hour with idempotent time buckets. Watchdog liveness
+allows up to 75 minutes between
 published entries so ordinary scheduler and generation jitter does not create a
 false outage. That age check answers only whether the diary is still advancing.
 
 Provenance quality is checked separately. Two consecutive entries attributed to
 the deterministic fallback raise an alarm even when both entries are fresh.
-This distinguishes a healthy hourly publishing loop from a model-writing path
+This distinguishes a healthy publishing loop from a model-writing path
 that has silently remained unavailable.
 
 ## 7. Append-only ledger

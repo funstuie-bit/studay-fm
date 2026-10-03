@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1600" height="170" viewBox="0 0 1600 170" role="img" aria-labelledby="title desc">
   <title id="title">Studay FM broadcast facts</title>
-  <desc id="desc">Five stations, seventeen voices, twenty-four seven live, one hundred percent generated music, and roughly two thousand tracks auditioned.</desc>
-  <rect x="1" y="1" width="1598" height="168" rx="18" fill="#0b0a08" stroke="#49391f"/>
+  <desc id="desc">Five stations, eighteen fictional voices including the Signalman, twenty-four seven live, one hundred percent generated music, and roughly two thousand tracks auditioned.</desc>
+  <rect x="1" y="1" width="1598" height="168" rx="28" fill="#fff8f0" stroke="#e9c5d3"/>
   <g font-family="monospace" text-anchor="middle">
-    <g font-size="35" font-weight="700" fill="#f3ecdf">
-      <text x="160" y="72">5</text><text x="480" y="72">17</text><text x="800" y="72">24/7</text><text x="1120" y="72">100%</text><text x="1440" y="72">~2K</text>
+    <g font-size="35" font-weight="700" fill="#2e1735">
+      <text x="160" y="72">5</text><text x="480" y="72">18</text><text x="800" y="72">24/7</text><text x="1120" y="72">100%</text><text x="1440" y="72">~2K</text>
     </g>
     <g font-size="13" font-weight="700" letter-spacing="3">
-      <text x="160" y="112" fill="#de4e78">LIVE STATIONS</text><text x="480" y="112" fill="#f1a82f">FICTIONAL VOICES</text><text x="800" y="112" fill="#43d7b0">ON AIR</text><text x="1120" y="112" fill="#df5838">GENERATED MUSIC</text><text x="1440" y="112" fill="#8e79d8">TRACKS AUDITIONED</text>
+      <text x="160" y="112" fill="#b42f26">LIVE STATIONS</text><text x="480" y="112" fill="#70426e">FICTIONAL VOICES</text><text x="800" y="112" fill="#466a28">ON AIR</text><text x="1120" y="112" fill="#b42f26">GENERATED MUSIC</text><text x="1440" y="112" fill="#70426e">TRACKS AUDITIONED</text>
     </g>
   </g>
-  <g stroke="#49391f"><path d="M320 30v110M640 30v110M960 30v110M1280 30v110"/></g>
+  <g stroke="#e9c5d3"><path d="M320 30v110M640 30v110M960 30v110M1280 30v110"/></g>
 </svg>

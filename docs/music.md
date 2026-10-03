@@ -1,11 +1,11 @@
 # Deep dive: music generation
 
 Studay FM generates music with ACE-Step, but generation and playout are separated
-by authentication, a private queue, a fixed review policy, technical QA, and
+by bounded batch workers, owner listening review, technical QA, and
 atomic approved manifests.
 
 ```text
-lane recipe -> typed queue job -> authenticated ACE-Step -> candidate audio
+lane recipe -> serialized batch -> ACE-Step worker -> candidate audio
                                                         |
                                             configured review policy
                                                         |
@@ -17,6 +17,22 @@ lane recipe -> typed queue job -> authenticated ACE-Step -> candidate audio
 ```
 
 ## 1. Versioned generation recipes
+
+The primary bulk route is ACE-Step 1.5 XL Turbo with the 1.7B planner on an RTX
+3090. It uses the native asynchronous task API: submit, checkpoint the returned
+task ID, poll, retrieve and verify audio. The older authenticated server wrapper
+is a separate API; its details below are reference design rather than the
+current batch client's protocol.
+
+The reviewed prompt library now covers vocals as well as instrumentals across
+the flagship and flow stations. Distinct IDs, seeds or filenames do not make
+repeated captions and lyrics distinct songs. Batch preflight checks creative
+inputs as well as exact files, while listening establishes whether different
+performances are worth keeping.
+
+Current batch work can let the planner choose a duration rather than impose
+one uniform length. Minimum-length checks and file-size/time budgets remain technical
+controls, separate from musical structure.
 
 Each show or flow pool owns a lane recipe containing:
 
@@ -54,7 +70,7 @@ and urban vocal delivery rather than writing “not [unwanted genre].”
 
 The generator rejects a quarantined trigger before spending compute.
 
-## 3. Authenticated internal API
+## 3. Authenticated wrapper API (reference)
 
 The ACE-Step server is treated as a security boundary even when it is reachable
 only on a private network.
@@ -90,16 +106,22 @@ accelerator and can destabilize the service.
 
 Two controls reinforce each other:
 
-- the private generation queue starts one expensive job at a time;
+- the current batch runner starts one expensive job at a time;
 - the API itself accepts one active inference and rejects overlap immediately.
 
 Throughput scales by adding reviewed capacity or generation windows, not by
 letting one model process accept an unbounded backlog.
 
 Health checks need enough timeout to distinguish a busy server from an
-unreachable one, but they still authenticate and remain bounded.
+unreachable one. They remain bounded and use the endpoint's configured access
+contract, rather than assuming the native API and wrapper are interchangeable.
 
-## 5. Generation queue v2
+## 5. Generation queue v2 (historical)
+
+This general worker is deliberately disabled. Current native-API batches use
+their own persisted task checkpoints and review outputs. The lease design
+below is historical reference, not a component monitoring should expect to
+run just because its files remain present.
 
 A queued music job records:
 
@@ -165,10 +187,10 @@ Generation success never sets live eligibility by itself.
 
 ## 9. Review policy and technical QA
 
-Flagship music has an explicit owner taste-review path for candidates. A new or
-changed prompt version on a flow station is also candidate-only: generation does
-not increase the approved pool or inherit the previous version's acceptance.
-Promotion requires the configured owner review and current technical QA.
+New music across all five stations requires explicit owner listening review.
+Generation does not increase the approved pool or inherit the previous prompt
+version's acceptance. Promotion requires that owner decision and current
+technical QA.
 
 Manual review is appropriate for a new lane, changed recipe, suspicious result,
 vocal material, or any rights/provenance concern.
@@ -240,6 +262,13 @@ single-flight, and probabilistic. The safe pattern is:
 6. retire older material only after the replacement stock is live.
 
 ## 12. Storage and retention
+
+Generation masters, listening-review files and production assets have separate
+roles. The private package registry binds decisions to exact content hashes
+and portable relative locators; paths and folder suffixes carry no approval
+authority. Imports retain receipts and do not resurrect owner-deleted rejects.
+Approved package status must be reflected in the review index so already
+completed listening work does not return as a new assignment.
 
 Generated music belongs in a configurable external media root. During migration,
 a compatibility link may keep older consumers working, but containment must be

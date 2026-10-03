@@ -30,18 +30,24 @@ Complexity that does none of these should be deferred or removed.
 
 ## Near-term priorities
 
-1. Improve the newly live track-aware presenter writing: add more variety, refine
-   difficult character briefs, and extend exact pairing to The Captain on Yacht
-   Zone.
-2. Move suitable routine writing from hosted models to reviewed local models,
-   starting with sourced news behind the same deterministic editorial gate.
-3. Redesign the programme-director experiment around show-aware, audible choices;
-   its existing shadow remains review-only and has not earned live control.
-4. Improve station-fit admission and supplier evaluation for generated music so
-   new batches strengthen each dial's identity before entering rotation.
-5. Continue long-listen acceptance of the public receiver and expand the AI
-   manager only through observable capabilities with receipts, rollback and an
-   owner emergency stop.
+1. Evaluate the new Signalman editorial sessions in bounded show canaries:
+   coherent record runs, actual adjacent-track links and ordinary scheduling
+   resuming cleanly. Extend authority only after that evidence, not merely
+   because the old proposal schema passed.
+2. Keep locally hosted writing dependable across presenters, sourced news,
+   continuity, diary and operations. Routine work has already moved off metered
+   cloud inference; reliability and character variety are now the work.
+3. Extend exact pairing to The Captain's independent Yacht flow scheduler.
+   His writing is already local; following-track announcements remain a
+   separate integration, not a completed feature.
+4. Strengthen distinct prompt libraries and station-fit review. Human listening
+   remains the gate for new music, including technically valid tracks that are
+   repetitive or simply not worth another play.
+5. Refine the live clay receiver and its new Big GT programme, retain long-listen
+   checks, and make routine AI management useful, observable and reversible.
+
+The [current-state guide](docs/current-state.md) separates shipped work from
+experiments. A new skin is not a claim that the whole station is autonomous.
 
 ## A separate reusable AI radio project
 

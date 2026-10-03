@@ -8,9 +8,21 @@ Studay FM uses separate boundaries for music, speech, text and news. They share
 the same basic rules: authenticate the caller, bound the work, contain the
 files, reject overload and keep candidate output away from live playout.
 
+Current routes are summarised in [Current state](current-state.md). Local
+network access is not a promise that every upstream service implements the
+same authentication contract; native services and station wrappers differ.
+
 ## ACE-Step music generation
 
-ACE-Step runs behind an authenticated, single-flight service.
+Bulk generation now uses ACE-Step 1.5's native asynchronous task API on the
+RTX 3090 worker, with XL Turbo and the 1.7B planner. Submit a task, poll its
+identity, retrieve its audio, then advance. It is LAN-only and not exposed
+through the public site. Native task admission may reject an overlapping or
+busy request; clients must respect that response rather than flood the worker.
+
+The earlier authenticated wrapper is a different protocol, not a service
+address that can be substituted into a native client. Its reference contract
+below remains useful when deploying a wrapper:
 
 The server:
 
@@ -27,9 +39,9 @@ embedded credentials, redirects, unexpected response shapes, unsupported audio,
 symlink targets and extension mismatches. Accepted output is written atomically
 with private permissions.
 
-Single-flight exists twice. The private queue starts one expensive job at a
-time, and the API independently rejects concurrent inference. If either layer is
-misconfigured, the other one still prevents an accelerator pile-up.
+Current batch runners serialize requests and checkpoint task identity before
+polling. They keep generation outputs and listening reviews separate from
+production. A successful native task is not an approval decision.
 
 ## Chatterbox speech rendering
 
@@ -51,12 +63,13 @@ moving private character material into deployment checks.
 
 ## Text generation
 
-Presenter writing and other text work use an OpenAI-compatible contract. The
-local route passes through an authenticated, loopback-only, inference-only
-gateway for one allowlisted model.
+Presenter writing and other text work use fixed, allowlisted local inference
+clients. Cydonia supplies presenter prose, Gemma supplies sourced news and
+continuity, and the DGX-hosted DeepSeek route serves editorial selection,
+diary and operations clients. No routine writing requires a paid model API.
 
-The gateway forwards the generation route needed by the station. It does not
-forward model pull, delete, filesystem or administration routes. Requests,
+Clients call only the generation routes needed by the station. They expose no
+model pull, delete, filesystem or administration tools. Requests,
 responses, token counts, timeouts and retries are bounded. The presenter writer
 has no tools.
 
@@ -78,7 +91,11 @@ and verification record. This provides traceability. It does not magically turn
 the model into a fact-checker. If the gate fails, no bulletin is produced and
 music continues.
 
-## The private queue
+## The earlier private queue
+
+The general queue worker is deliberately disabled, not a missing heartbeat to
+repair. Active batches use dedicated serialized, checkpointed runners; the
+following describes the retained queue design, not a live service dependency.
 
 Expensive work enters a typed local queue. Each job records a generated ID, job
 type, label, priority, optional start time, argv array, approved working
