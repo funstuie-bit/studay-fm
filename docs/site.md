@@ -1,6 +1,6 @@
 # Deep dive: the public site
 
-The Studay FM website is a static receiver-style app backed by validated JSON
+The Studay FM website is a static claymation receiver backed by validated JSON
 published by the station. It has five station selectors, a persistent live
 player, truthful now-playing, schedule, presenters, catalogue, transmission log,
 saved items and programme views.
@@ -88,8 +88,8 @@ the presenter label changes correctly.
   download for the next real scheduled occurrence.
 - **Catalogue:** renders only approved public catalogue entries and can play
   approved previews where present.
-- **Transmission log:** displays the Signalman's grounded public entries and
-  their modes.
+- **Transmission log:** displays the Signalman's full grounded duty-log entries,
+  with stable reading state during background updates.
 - **Recently played:** shows bounded music and bumper changes from all five live
   feeds without exposing media paths or private review data.
 - **Daily discovery:** selects three real catalogue previews consistently for
@@ -105,10 +105,17 @@ It has no browser-side compiler, third-party framework runtime or remote asset
 dependency. Hash routes keep the five main views, Saved and programme pages
 shareable while one audio player remains mounted.
 
-The receiver's moving dial is a station selector, not a claimed radio frequency
-or signal-strength instrument. The selected peak follows the chosen station,
-while the live signal and mini player displays respond to real browser audio when
-the stream is playing.
+Station controls live inside a clay vinyl player. Sculpted bars and record
+motion communicate playback without claiming to measure a radio frequency or
+signal strength. Reduced-motion preferences are honoured by default and the
+listener can explicitly enable animation. A persistent mini player appears
+when the home transport leaves view or another page is open, after playback
+has started.
+
+Presenter and station art use responsive WebP derivatives, not multi-megabyte
+masters. Big GT has his own portrait and programme; The Captain's portrait is
+separate from Yacht Zone's station artwork. Discovery cards and recent history
+belong to the catalogue, with the duty-book teaser on the home page.
 
 The script policy is `script-src 'self'`; inline and evaluated scripts are not
 required.

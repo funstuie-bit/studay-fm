@@ -80,7 +80,12 @@ For each station, reliability includes content eligibility:
 A station with a stale manifest or an on-air asset lacking current technical
 evidence is red even if audio is still audible.
 
-## 6. Queue v2 checks
+## 6. Queue v2 checks (historical)
+
+The legacy general queue worker is intentionally disabled. Its heartbeat is
+not part of current readiness. The following checks apply only if that worker
+is deliberately re-enabled; native ACE-Step batches retain their own task
+checkpoints and terminal evidence.
 
 Generation queue health includes:
 
@@ -175,8 +180,11 @@ Each long-lived component has its own user service:
 - Icecast, Caddy, and tunnel connector;
 - five playout graphs;
 - site-data publisher;
-- queue worker;
-- authenticated inference-only model gateway and private bot gateway.
+- private bot gateway and bounded producer clients.
+
+The disabled legacy queue and superseded model tunnel are not expected live
+services. Monitoring follows the active service inventory, not every historical
+plist retained in source.
 
 Calendar jobs cover news, content top-ups, watchdog, approved-media refresh, and
 retention audit.

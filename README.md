@@ -6,7 +6,7 @@ Five live radio stations, hundreds of invented records and a cast of fictional
 presenters. Machines generate the content, run the schedules and keep everything
 on air.
 
-<a href="https://studayfm.com"><img src="docs/images/readme-hero.webp" alt="Studay FM: five stations, seventeen voices, radio that never sleeps"></a>
+<a href="https://studayfm.com"><img src="docs/images/readme-hero.webp" alt="Studay FM's live claymation receiver: five stations, eighteen fictional voices"></a>
 
 <p align="center">
   <strong><a href="https://studayfm.com">▶ LISTEN LIVE</a></strong>
@@ -14,7 +14,7 @@ on air.
   <strong><a href="docs/audio/studayfm-one-minute.mp3">HEAR ONE MINUTE OF STUDAY FM</a></strong>
 </p>
 
-![Five live stations, seventeen fictional voices, broadcasting around the clock with 100% generated music and roughly 2,000 tracks auditioned](docs/images/readme-facts.svg)
+![Five live stations, eighteen fictional voices, broadcasting around the clock with 100% generated music and roughly 2,000 tracks auditioned](docs/images/readme-facts.svg)
 
 Studay FM is a hobby project exploring how far an AI-managed radio network can
 go without losing the part that makes radio worth listening to. It runs around
@@ -38,7 +38,7 @@ Together they make one permanently tunable network.
 
 ## Voices in the machine
 
-![The Duke, Downtown, The Instigator, The Archivist, The Rambler and Offshore Ghost](docs/images/readme-presenters.webp)
+![The claymation cast, including Big GT, The Duke, Downtown and The Instigator](docs/images/readme-presenters.webp)
 
 Studay FM has a resident cast of fictional radio characters, each with a
 programme, musical lane, schedule, artwork and way of speaking.
@@ -46,7 +46,9 @@ programme, musical lane, schedule, artwork and way of speaking.
 The Duke starts the morning. Downtown takes lunch. The Instigator handles the
 drive home. The Archivist digs through strange records, The Rambler tells the
 stories behind them and Offshore Ghost keeps watch through the small hours.
-Weekends and specialist shows bring another crew to the studio.
+Weekends and specialist shows bring another crew to the studio. Big GT's
+*The Grove Pocket* connects rumba, salsa, soul, funk and highlife in the
+Thursday and Friday midnight slots, Los Angeles time.
 
 They are not one generic AI voice with different names. Presenter links are
 written for the character and the exact record being played, then rendered and
@@ -82,6 +84,10 @@ feed five independent playout systems, fictional presenters add links and
 continuity, and the public receiver follows the real schedule and now-playing
 state. If a voice segment is unavailable, the station carries on with music.
 
+Routine writing now runs on self-hosted models, with music and speech on
+separate workers. The Signalman's newer editorial layer can shape short runs
+of reviewed records; code still owns eligibility, timing and the exact joins.
+
 Studay FM is highly automated, but not yet fully autonomous. The aim is for AI
 to manage routine programming, production, monitoring and recovery while the
 owner sets the creative direction and keeps an emergency stop. New authority is
@@ -93,10 +99,17 @@ For the machinery, safeguards and less glamorous details, see the
 
 ## Explore the station
 
+The receiver now wears clay: plasticine portraits, a vinyl player and a little
+sculpted visualiser. Underneath, it is still the same shared live broadcast.
+The Signalman's [diary](https://studayfm.com/#diary) keeps the duty book:
+station facts, quiet observations and the occasional suspiciously unnecessary
+aside from a machine that enjoys its job.
+
 - [Listen live](https://studayfm.com)
 - [Hear the one-minute station sampler](docs/audio/studayfm-one-minute.mp3)
 - [Meet the presenters](docs/PRESENTERS.md)
 - [See where the project is going](ROADMAP.md)
+- [Catch up with the current setup](docs/current-state.md)
 - [Read the technical deep dives](docs/README.md)
 - [Browse the music system](docs/music.md)
 

@@ -35,10 +35,11 @@ An exact owner instruction can authorise one small reversible operation. The
 broker validates typed arguments, binds the request to the exact target, applies
 an expiry, enforces idempotency and records a receipt.
 
-Retiring the exact track identified in a request is a useful example. If the
-now-playing item changes before execution, the digest or target identity no
-longer matches and the action fails. It does not retire whatever happens to be
-playing later.
+Retiring the exact track identified in a request is a useful example. Current,
+recent and named-track resolution bind the operation to the intended asset;
+a track change does not authorise retiring its replacement. Ambiguous names
+need clarification. Changed file hashes fail rather than moving the action to
+whatever happens to be playing later.
 
 The owner's instruction approves that specific outcome. A later command
 confirmation provides execution visibility. It does not invite the model to
@@ -63,9 +64,9 @@ mutation is also excluded from general model access because
 adding a queued job is local command authority in a nicer outfit.
 
 Model endpoints, request size, response size, step count, tool output and
-session duration are bounded. The local writing path sits behind an
-authenticated inference-only gateway. Model pull, delete and administration
-routes are not forwarded.
+session duration are bounded. The local writing path uses fixed allowlisted
+inference clients. Model pull, delete and administration routes are not
+exposed as station capabilities.
 
 A hosted provider can implement the same text-generation contract. Changing the
 provider does not change the authority attached to the request.
@@ -77,11 +78,11 @@ speech rendering and QA, an accepted link is bound to the hashes of that record
 and its sidecar. The writer cannot approve media, change the schedule or control
 playout.
 
-The programme-director experiment is separate again. It receives the current
-show, recent history and an approved shortlist, then proposes exact assets and
-speech decisions against a schema. Those proposals are review-only. The first
-long observation proved that the interface worked but mostly selected silence,
-so it was not promoted into a live controller.
+Programme direction is separate again. The newer editorial sessions receive
+the current show, recent history and an owner-reviewed shortlist, then propose
+exact ordered records and presenter treatments. A narrow, expiring show-canary
+path validates every asset and falls back to ordinary scheduling. It is not a
+general service-control tool or permission to approve generated music.
 
 ## Why the receipts matter
 

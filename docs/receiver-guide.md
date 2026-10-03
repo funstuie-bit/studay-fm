@@ -7,6 +7,17 @@ same schedule and now-playing data used by the station.
 It is not an admin screen with nicer colours. No station controls, private
 review data or model tools are exposed in the browser.
 
+The current receiver has a claymation identity: plasticine portraits, raised
+panels, a vinyl-record transport and a recessed clay visualiser. Motion honours
+reduced-motion preferences, with an explicit animation toggle. Large artwork
+masters stay off the site; responsive WebP variants serve the actual viewport.
+
+![The live clay receiver on desktop](images/hero.png)
+
+<img src="images/receiver-mobile.png" width="390" alt="The live clay receiver on mobile">
+
+These captures show the live receiver on 2 October 2026, not the Docker demo.
+
 ## Tune the network
 
 The dial switches between:
@@ -69,8 +80,8 @@ calendar reminder for the next real scheduled occurrence.
 The public catalogue contains approved entries selected for the site. It is not
 a directory listing of the private media library.
 
-Where a reviewed preview exists, the listener can play it. The home page also
-selects three catalogue discoveries for each Los Angeles calendar day. Everyone
+Where a reviewed preview exists, the listener can play it. The catalogue also
+selects three discoveries for each Los Angeles calendar day. Everyone
 sees the same three. There is no recommendation profile pretending it knows the
 listener after two clicks.
 
@@ -82,8 +93,15 @@ uses bounded public records and does not expose media paths or review data.
 Presenter pages carry the character artwork, programmes, musical lanes and
 hours. Live badges follow the programme IDs used by the real schedule.
 
-The Transmission Log is The Signalman's public creative logbook. It is built
-from grounded public station state. It is not a disguised watchdog page.
+The Transmission Log is The Signalman's public duty book. Half-hourly entries
+combine real station information with original deadpan observations from a
+keeper who likes the job and suspects nobody reads his reports. Reporting
+focuses vary rather than repeating the same full checklist.
+
+The page preserves expanded entries during live refresh and displays the full
+entry text. It is neither a joke feed nor a disguised watchdog page.
+
+![The Signalman's diary in the clay receiver](images/receiver-diary.webp)
 
 ## Saving and sharing
 

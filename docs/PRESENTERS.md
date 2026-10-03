@@ -27,8 +27,10 @@ repository.
 | **The Detour** | **The Crate** | **The Philosophizer** |
 | ![The Early Bird](images/the_early_bird.webp) | ![The Dust Jacket](images/the_dust_jacket.webp) | ![The Resident](images/the_resident.webp) |
 | **The Early Bird** | **The Dust Jacket** | **The Resident** |
-| ![The Neighbour](images/the_neighbour.webp) | ![The Signalman](images/the_signalman.webp) | ![The Captain](images/the_captain.webp) |
-| **The Neighbour** | **The Signalman** | **The Captain** |
+| ![The Neighbour](images/the_neighbour.webp) | ![Big GT](images/big_gt.webp) | ![The Captain](images/the_captain.webp) |
+| **The Neighbour** | **Big GT** | **The Captain** |
+| ![The Signalman](images/the_signalman.webp) | ![Airelle](images/airelle.webp) | ![The Newsreader](images/the_newsreader.webp) |
+| **The Signalman** | **Airelle** | **The Newsreader** |
 
 ## The weekday clock
 
@@ -37,8 +39,8 @@ repository.
 | 06:00-10:00 | First Cup | **The Duke** | Warm breakfast company |
 | 10:00-14:00 | Big City Lunch | **Downtown** | Confident club-pop energy |
 | 14:00-18:00 | Drive Time Is Survive Time | **The Instigator** | Fast, provocative, socially observant |
-| 18:00-22:00 | The Listening Room | **The Archivist** | Curious crate-digger |
-| 22:00-02:00 | The Long Way Home | **The Rambler** | Unhurried music storyteller |
+| Mon-Thu 18:00-21:00, Fri 18:00-20:00 | The Listening Room | **The Archivist** | Curious crate-digger |
+| 22:00-02:00, except specialist windows below | The Long Way Home | **The Rambler** | Unhurried music storyteller |
 | 02:00-06:00 | The Graveyard Shift | **Offshore Ghost** | Calm, dry small-hours presence |
 
 **The Duke** opens the day as warm radio company. The character notices the whole
@@ -87,24 +89,36 @@ Saturday, then mellow soul and downtempo on Sunday.
 
 ## Weekly specials
 
-- **The Detour**, *Friday Evening Sessions*: punk, post-punk, garage, indie, and
+- **Big GT**, *The Grove Pocket*: Thursday and Friday **00:00-02:00 Pacific**,
+  following Wednesday and Thursday nights. A warm, unhurried guide connecting
+  Congolese rumba, soukous, salsa, soul, funk and highlife through rhythm.
+  The records get room to stretch; short exact-track introductions arrive
+  after three or four records. Strictly rhythm. Zero filler.
+- **The Detour**, *Friday Evening Sessions*, Friday 20:00-24:00: punk, post-punk, garage, indie, and
   the long route home.
-- **The Crate**, *Without Borders*: spiritual jazz, afrobeat, desert blues,
+- **The Crate**, *Without Borders*, Saturday 19:00-21:00 and Sunday 11:00-16:00:
+  spiritual jazz, afrobeat, desert blues,
   broken beat, dub, and soul, described through people and records rather than a
   catch-all genre label.
-- **The Philosophizer**, *Talk Radio For Thinking People*: a bombastic fictional
+- **The Philosophizer**, *Talk Radio For Thinking People*, Monday-Thursday
+  21:00-22:00: a bombastic fictional
   monologue host whose argument repeatedly lands somewhere more reasonable than
   intended. The joke depends on structure, not abuse.
 
 Specials are first-class schedule windows. They displace a regular show rather
 than being layered ambiguously on top of it.
 
+All hours on this page are Los Angeles time. The
+[live schedule](https://studayfm.com/#schedule) is the canonical weekly view,
+including specials and overnight calendar-day boundaries.
+
 ## Continuity and the other dials
 
 - **The Signalman** is Studay FM's continuity voice and diary character. It marks
-  transitions and summarizes real station state. A separate read-only shadow now
-  evaluates track-aware programme choices under the same identity, but it does
-  not yet control live playout or services.
+  transitions and keeps a factual duty log with a mischievous streak: station
+  information first, then the occasional deadpan aside. Its separate editorial
+  session layer evaluates ordered runs and exact-track links through a bounded
+  show-canary path; character text cannot administer the station.
 - **The Captain** hosts Yacht Zone with sparse links around its day/night music
   change.
 - **Airelle** carries C'est Magnifistu between tracks without turning the flow

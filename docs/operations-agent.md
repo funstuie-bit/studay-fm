@@ -3,8 +3,8 @@
 The local agent is an engineering operator. It is not an on-air DJ and it is not
 the autonomous station manager the project is working towards.
 
-Production runs the agent through the Pi coding-agent harness against an
-owner-hosted Qwen model. Routine audits, planning and maintenance conversations
+Production runs the agent through the Pi coding-agent harness against a
+self-hosted DeepSeek model on the DGX cluster. Routine audits, planning and maintenance conversations
 therefore do not require a metered cloud model. The model choice is less
 important than the boundary around it.
 
@@ -28,6 +28,12 @@ for named allowlisted services.
 
 The tools remove private paths from ordinary results and keep the context small.
 The agent sees the evidence needed for the question, not a tour of the machine.
+
+A greeting starts no station audit. Observation budgets and repetition fuses
+stop repeated reads or now-playing polls from becoming an endless tool loop.
+The scheduled hourly operator is a separate read-only service; the Discord
+assistant is another client of the bounded station broker, not this engineering
+agent with a different name.
 
 ## Plan
 

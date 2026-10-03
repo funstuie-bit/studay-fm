@@ -1,8 +1,9 @@
 # Deep dive: track-aware programme direction
 
-Studay FM now separates two related jobs: a live, guarded presenter writer that
-knows the exact record it is introducing, and a broader programme-director
-experiment that still proposes decisions without changing playout.
+Studay FM separates live exact-track presenter writing from a newer editorial
+session layer. The latter can shape an ordered musical run and give the
+presenter a reason to make the next link, rather than attaching a convincing
+story to a random record.
 
 ```text
 current show + recent history + approved shortlist
@@ -11,11 +12,11 @@ current show + recent history + approved shortlist
        |                                   |
 exact next record                   approved shortlist
        |                                   |
-local presenter candidate           director proposal
+local presenter candidate           editorial session
        |                                   |
 speech and technical QA             strict validation
        |                                   |
-verified talk/track pair             review-only record
+verified talk/track pair             aircheck / bounded show canary
 ```
 
 ## Track-aware presenter links
@@ -32,13 +33,13 @@ both, places the talk and exact track as one pair, and live selection verifies
 them again. A bulletin cannot split the pair. If the record changes, retires or
 fails validation, the link is dropped and approved music continues.
 
-This route is live for fourteen flagship presenters. It began with 52 approved
-links, and the first naturally reached production pair was observed introducing
-and then playing the exact named record. The Captain remains on the existing
-Yacht Zone route until that independent flow scheduler can enforce the same
-pairing rule.
+The route is live across the established flagship programmes and Big GT's new
+Grove Pocket lane. The Captain's writing is now local too, but his Yacht Zone
+continuity remains generic until that independent flow scheduler can enforce
+the same pairing rule. Local prose and exact-track scheduling are different
+milestones.
 
-## Programme-director contract
+## Editorial session contract
 
 The director sees only bounded station context:
 
@@ -48,23 +49,40 @@ The director sees only bounded station context:
 - current speech eligibility and remaining session limits;
 - a bounded session note carried from the prior decision.
 
-It returns a strict object containing one to three exact approved asset IDs, a
-speech or silence decision, a reason code, and an optional short session note.
-Unknown IDs, duplicates, invalid order, overlong notes and speech-policy
-violations fail validation.
+It returns an ordered run of exact surfaced candidate IDs, a presenter
+treatment and a bounded session note. Code maps those IDs back to reviewed
+music hashes. Invented IDs, duplicate selections, wrong counts and invalid
+adjacent-track references fail validation.
 
-## Programme-director shadow
+The model has useful creative freedom: an episode angle, a short musical
+movement, a bridge or forward link, and character-consistent fictional stories
+about supplied records. It cannot invent catalogue identity or turn a
+fictional discovery story into verified release history.
 
-The director shadow runs beside normal scheduling and records what it would have
-chosen. It cannot enqueue media, edit manifests, restart services or change the
-live schedule. Cloud and local models can be evaluated against the same contract
-without changing their permissions.
+Code owns speech cadence. Daytime shows generally talk after three or four
+records, while quieter late-night programmes leave longer gaps. The model
+cannot avoid every due break or start chatting after every song. Sessions
+expire at the show boundary, retain bounded memory and record only material
+actually aired, not every generation attempt.
 
-Review asks practical radio questions: did it choose coherent records, avoid
-repetition, respect the host's lane, use silence well and make the programme more
-enjoyable? The first long shadow was mechanically stable but overwhelmingly
-chose silence, so it did not earn a live canary. The next version needs stronger
-show-aware creative behaviour before authority is reconsidered.
+## From aircheck to bounded canary
+
+The original read-only shadow was mechanically stable but mostly chose silence.
+It remains historical evaluation, not the current creative design. The newer
+editorial sessions produced owner-accepted First Cup and Crate listening
+editions with exact track joins and readable cue sheets.
+
+A Crate-only canary path is implemented: a short hash-sealed run, its opening
+and closing, an actual show window, expiry and a disable marker checked at
+item boundaries. Outside that exact window, or if a binding fails, ordinary
+approved scheduling wins. This is not a claim of permanent autonomous control
+across every presenter.
+
+Review still asks practical radio questions: does the run feel intentional,
+avoid repetition, fit the host and name the record that really follows? A model
+can reason about metadata but cannot establish that the music is pleasant or
+glitch-free by listening. Editorial candidates therefore require explicit
+owner-review evidence as well as technical eligibility.
 
 ## Capability boundary
 

@@ -295,8 +295,8 @@ An asset is eligible only when all of these agree:
 - regular contained audio;
 - valid same-stem sidecar;
 - an approval status assigned by the configured review policy, such as explicit
-  owner taste review for flagship music or fixed validators for scheduled
-  speech, flow refreshes, and news;
+  owner listening review for music on every station or fixed validators for
+  scheduled speech, continuity and news;
 - current technical QA tied to exact file identity;
 - subsystem-specific requirements such as news provenance;
 - atomic manifest inclusion.
@@ -309,6 +309,11 @@ must never be able to assign status through an operations tool.
 Publish under one lock. A failed build must preserve the prior manifest.
 
 ### 10. Add generation queue v2
+
+This is an optional starter design. The live station now uses dedicated
+serialized native-API batch runners rather than the old general queue worker.
+See [Current state](docs/current-state.md) before treating this guide as a
+production inventory.
 
 Expensive jobs should enter a private typed queue with:
 

@@ -10,6 +10,12 @@ This page is a public design summary. It intentionally omits private hosts,
 accounts, credentials, service labels, review identifiers, and recovery
 commands.
 
+This is the historical Phase 5 checkpoint, not a list of current services.
+The later [current-state guide](current-state.md) records the native ACE-Step
+worker, self-hosted DGX text routes, editorial sessions and clay receiver.
+The general queue and old model tunnel are now retired; their earlier safety
+design is retained below as reference.
+
 ## One voice at a time
 
 Presenter links, continuity, and bulletins used to have independent scheduling
@@ -101,7 +107,7 @@ The change gate combines:
 - runtime capture and health evidence for playout changes.
 
 Runtime monitoring also keeps cadence separate from content provenance. The
-hourly diary writer receives a 75-minute liveness allowance, while two
+half-hourly diary writer receives a 75-minute liveness allowance, while two
 consecutive deterministic-fallback entries trigger their own provenance alarm.
 This avoids both false freshness alerts and silent degradation of the preferred
 writing path.

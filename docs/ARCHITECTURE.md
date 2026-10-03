@@ -8,6 +8,12 @@ This is a public reference architecture. Paths, hosts, credentials, private
 voice material, deployment recovery details, and the live media library are
 intentionally omitted.
 
+Current-state checkpoint: 2 October 2026. Routine text work is locally hosted;
+the receiver is clay-themed and includes Big GT. The older general generation
+queue and loopback model tunnel are historical design components, not required
+live services. See [Current state](current-state.md) for active roles and
+[Programme direction](programme-direction.md) for editorial sessions.
+
 ## System shape
 
 ```text
@@ -38,9 +44,9 @@ intentionally omitted.
                   |
         +---------+----------+
         |                    |
-   private queue       scheduled producers
+   batch workers       scheduled producers
         |                    |
- authenticated ACE     bounded Chatterbox
+ bounded ACE-Step      bounded Chatterbox
 
  watchdog -> readiness -> typed capability broker -> owner / bounded LLM workflows
 
@@ -85,8 +91,8 @@ An `approved` sidecar alone is insufficient. Eligibility requires all of:
 5. any subsystem-specific gate, such as source provenance for news;
 6. inclusion in the atomically published manifest consumed by playout.
 
-Flagship music supports explicit owner taste review. Recurring presenter speech,
-continuity, flow refreshes, and news can receive approval from narrow
+New music across all five stations requires owner listening review. Recurring
+presenter speech, continuity and news can receive approval from narrow
 owner-configured validators. In every case the model lacks an approval tool.
 
 The technical gate checks format, sample rate, channel count, duration, silence,
@@ -149,11 +155,15 @@ approved next record. Its sidecar binds the music file and music metadata by
 hash. The scheduler admits only a current binding and places the talk plus music
 as an atomic pair; the live selector verifies it again immediately before use.
 Bulletins cannot split the pair. If anything has changed, the link is omitted
-and approved music continues. Fourteen flagship presenters currently use this
-guarded local writing route. It does not grant the writer approval, scheduling
+and approved music continues. The established flagship programmes and Big GT
+use this guarded local writing route. It does not grant the writer approval, scheduling
 or playout authority.
 
-## Generation queue v2
+## Generation queue v2 (historical)
+
+The old general queue worker is deliberately disabled. Current ACE-Step batches
+use serialized, checkpointed task runners and separate review packages. The
+following lease design is retained as reference, not a live prerequisite.
 
 Expensive jobs are private, typed, and single-flight. A job record contains:
 
@@ -177,7 +187,13 @@ separate broker that validates exact targets and writes receipts.
 
 ### ACE-Step
 
-The music service is treated as an internal API, not a trusted library call:
+The primary bulk worker uses ACE-Step 1.5's native async API with XL Turbo and
+the 1.7B planner. It submits one task, polls its ID and retrieves completed
+audio before advancing. It is a restricted LAN service, not a public browser
+API. The earlier authenticated wrapper is a distinct contract; changing only
+its host cannot convert a wrapper client into a native client.
+
+The earlier wrapper's protections remain useful reference requirements:
 
 - bearer authentication applies to health and generation routes;
 - the listener binds to one intended interface, not every interface;
@@ -241,14 +257,13 @@ postcondition check. The policy cannot invent new actions or broaden its own
 scope.
 
 Model endpoints, requests, responses, step counts, tool output and session
-duration remain bounded. Local inference is separated from raw model
-administration by an authenticated, inference-only gateway; a hosted provider
-can implement the same contract without receiving broader authority.
+duration remain bounded. Fixed local clients separate inference from raw model
+administration. Routine writing uses self-hosted models; a hosted provider can
+implement the same contract without receiving broader authority.
 
-Programme-direction experiments use another read-only boundary. They can propose
-exact approved assets and speech decisions, but the current shadow cannot alter
-live playout. The first long observation proved the contract but mostly chose
-silence, so no controller canary was promoted. See
+Programme direction now has a creative editorial-session contract and a narrow,
+expiring show-canary path. Code still owns eligibility, timing and exact joins;
+this does not grant network-wide autonomous control. See
 [Programme direction](programme-direction.md).
 
 ## Owner feedback and music iteration

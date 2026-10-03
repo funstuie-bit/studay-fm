@@ -9,10 +9,11 @@ Start with the [project direction](../ROADMAP.md) and
 
 | Page | What it covers |
 |---|---|
+| [Current state](current-state.md) | What is live now, self-hosted model roles and what remains experimental |
 | [Production flow](production-flow.md) | Full station diagram, approved media, atomic manifests and atomic public state |
 | [Model authority](model-authority.md) | Observation tools, owner-authorised actions, receipts and bounded repair |
 | [Operations agent](operations-agent.md) | Audit, Plan and Maintain modes, confirmation and blocked operations |
-| [Generation boundaries](generation-boundaries.md) | ACE-Step, Chatterbox, text generation, news input and the private queue |
+| [Generation boundaries](generation-boundaries.md) | ACE-Step workers, Chatterbox, text generation, news input and batch boundaries |
 | [Hardware note](hardware-note.md) | What the RTX 3090 and M3 Max result showed, and what was never measured |
 | [Receiver guide](receiver-guide.md) | The five-station listener experience, player, schedule, catalogue, saved items and privacy |
 | [Voice provenance](voice-provenance.md) | Creative intent, private rights records, reference handling and withdrawal |
@@ -25,14 +26,14 @@ The deeper subsystem pages contain the implementation detail:
 | [Phase 5 quality and safety](phase-5.md) | Speech-safe playout, reviewed music iteration, bounded local inference, owner feedback, and verification |
 | [Presenters](PRESENTERS.md) | Fictional roster, schedule, voice intent, provenance boundary |
 | [Station engine](station-engine.md) | Five playouts, flagship clock, approved manifests, continuous MP3, truthful now-playing |
-| [Music generation](music.md) | ACE-Step recipe, authenticated bounded API, queue v2, technical QA, lane rotation |
+| [Music generation](music.md) | ACE-Step recipes and native tasks, serialized batches, listening review and lane rotation |
 | [Voices](voices.md) | Reference-conditioned speech, one-shot creative intent, renderer containment, post-processing, QA |
 | [DJ scripts](dj-scripts.md) | Character briefs, bounded LLM calls, validation, candidate metadata, deterministic fallback |
-| [Programme direction](programme-direction.md) | Live exact-bound presenter links, atomic talk/track pairs, and the separate review-only director shadow |
+| [Programme direction](programme-direction.md) | Live exact-bound links, creative editorial sessions and the bounded show-canary path |
 | [Talk pipeline](talk-pipeline.md) | Fixed producer workflow, review, QA, manifests, stocking, freshness, retirement |
 | [Newsreader](newsreader.md) | Bounded feeds, structured source IDs, attribution gate, render-once fan-out |
 | [Continuity and diary](continuity.md) | Hour markers, flow links, grounded diary, atomic publication |
-| [Site](site.md) | Receiver-style public site, five live stations, listener features, privacy and failure behaviour |
+| [Site](site.md) | Claymation receiver, five live stations, listener features, privacy and failure behaviour |
 | [Serving](serving.md) | Loopback origins, outbound tunnel, path allowlist, public build boundary, headers |
 | [Reliability](reliability.md) | Watchdog, readiness, queue recovery, transition alerts, service isolation, retention |
 
@@ -48,8 +49,8 @@ The deeper subsystem pages contain the implementation detail:
   narrow and expands only through tested, reversible steps.
 - **Speech categories share one arbiter.** Presenter links, continuity, and
   bulletins cannot stack; a full music track separates voice items.
-- **Local inference is not a raw model API.** An authenticated loopback gateway
-  exposes only bounded generation for an allowlisted model.
+- **Local inference is not model administration.** Fixed clients expose bounded
+  generation and tools, not arbitrary model loading or host access.
 - **Owner controls are transitional scaffolding.** They protect the live hobby
   while the AI manager earns dependable authority; they are not the end state.
 - **Music iteration is reviewable.** Prompt pools are versioned, new recipes
@@ -67,4 +68,10 @@ The deeper subsystem pages contain the implementation detail:
   candidate review, references, and operations documents are not web roots.
 
 For the small Docker-compatible demo, return to the
-[README quickstart](../README.md#current-docker-demo) and [SETUP.md](../SETUP.md).
+[README quickstart](../README.md#run-the-demo) and [SETUP.md](../SETUP.md).
+
+The receiver captures are from the public site, taken in isolated Chromium on
+2 October 2026. `scripts/capture-receiver.cjs` reproduces the four views with
+Playwright and a configured Chromium executable; it never opens an owner
+profile. `python3 scripts/check-docs.py` checks local references and code fences,
+and `bash scripts/scrub.sh` checks public text for private markers.

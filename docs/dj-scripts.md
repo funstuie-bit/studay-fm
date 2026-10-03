@@ -64,7 +64,7 @@ The prompt contains:
 - output-only-spoken-words rule;
 - no real-artist or real-song invention where the format requires fictional
   catalogue references;
-- no em dashes or stage directions.
+- no stage directions; speech text normalisation handles long dashes.
 
 Feed stories and other external text are not mixed into ordinary DJ prompts.
 The news workflow has its own untrusted-data boundary.
@@ -117,7 +117,7 @@ The script validator enforces renderer-friendly text:
 - no ultra-short lines;
 - punctuation suitable for chunking;
 - pronunciation-safe station name;
-- no em dash pause artifacts;
+- normalised punctuation without long-dash pause artifacts;
 - a clean final handoff.
 
 Long-form characters get wider word ranges and explicit structure. Continuity is
@@ -160,8 +160,8 @@ sidecar records that binding, and schedule assembly rejects a mismatch. This
 lets a fictional host tell a character-consistent story about what will actually
 play without giving the model control of the library or queue.
 
-The same exact-asset principle underpins the read-only programme-director shadow
-described in [Programme direction](programme-direction.md).
+The same exact-asset principle underpins the newer editorial sessions and
+bounded show-canary path described in [Programme direction](programme-direction.md).
 
 From the accepted script sidecar, continue to the
 [talk pipeline](talk-pipeline.md) and [voice renderer](voices.md).

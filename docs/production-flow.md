@@ -29,7 +29,7 @@ a half-written playlist.
                   |
         +---------+----------+
         |                    |
-   private queue       scheduled producers
+   batch workers       scheduled producers
         |                    |
    ACE-Step music      Chatterbox speech
         +---------+----------+
@@ -41,7 +41,7 @@ a half-written playlist.
                   observe | owner-authorised action | policy repair
 
   exact approved record -> presenter text -> speech QA -> talk/track pair
-  programme-director shadow -> reviewed proposals only
+  editorial sessions -> private airchecks / bounded expiring show canary
 ```
 
 The five stations use separate Liquidsoap graphs and separate Icecast mounts.
@@ -67,8 +67,8 @@ following:
 5. Any extra subsystem gate, such as source records for generated news.
 6. Inclusion in the complete manifest watched by Liquidsoap.
 
-Flagship music uses owner taste review. Recurring speech, continuity, flow
-refreshes and news can use fixed owner-configured validators. The model does not
+Music across all five stations uses owner listening review. Recurring speech,
+continuity and news can use fixed owner-configured validators. The model does not
 have a tool that can mark its own output approved.
 
 Technical QA checks the appropriate music or spoken-word profile. That includes

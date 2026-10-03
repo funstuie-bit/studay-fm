@@ -148,6 +148,9 @@ longer live or scheduled.
 
 ## 8. Queue use
 
+The original general queue worker is now disabled. This section describes the
+retained optional queue design, not a live prerequisite for scheduled speech.
+
 Large or scarce render batches can be submitted to generation queue v2. Jobs
 store validated argv, working directory, attempts, timeout, priority, and
 not-before time.
