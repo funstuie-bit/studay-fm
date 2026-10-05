@@ -11,6 +11,8 @@ on air.
 <p align="center">
   <strong><a href="https://studayfm.com">▶ LISTEN LIVE</a></strong>
   &nbsp;·&nbsp;
+  <strong><a href="https://www.youtube.com/@studayfm">WATCH ON YOUTUBE</a></strong>
+  &nbsp;·&nbsp;
   <strong><a href="docs/audio/studayfm-one-minute.mp3">HEAR ONE MINUTE OF STUDAY FM</a></strong>
 </p>
 
@@ -25,16 +27,21 @@ play and you join whatever is on air, already in progress.
 
 ![The five Studay FM stations on a radio dial](docs/images/readme-dial.svg)
 
-| Station | On air |
-|---|---|
-| **Studay FM** | The flagship: a full weekday clock, weekend crew and weekly specials |
-| **StuLoFiDay** | Lo-fi beats for work, study and staring out of windows |
-| **Yacht Zone** | Yacht rock by day, deep house by night, with The Captain |
-| **Tokyo Jazz** | Instrumental jazz-hop and beat-tape |
-| **C’est Magnifistu** | European-flavoured eclectic music with Airelle and a music-and-culture bulletin |
+| Station | On air | YouTube |
+|---|---|---|
+| **Studay FM** | The flagship: a full weekday clock, weekend crew and weekly specials | [Watch live](https://www.youtube.com/watch?v=wjP1TvmlOG4) |
+| **StuLoFiDay** | Lo-fi beats for work, study and staring out of windows | [Watch live](https://www.youtube.com/watch?v=_9Zg0hVV1xg) |
+| **Yacht Zone** | Yacht rock by day, deep house by night, with The Captain | [Watch live](https://www.youtube.com/watch?v=ny2XejlQhag) |
+| **Tokyo Jazz** | Instrumental jazz-hop and beat-tape | [Watch live](https://www.youtube.com/watch?v=6N55L0ihO04) |
+| **C’est Magnifistu** | European-flavoured eclectic music with Airelle and a music-and-culture bulletin | [Watch live](https://www.youtube.com/watch?v=-hJWbzl-90M) |
 
 Each is its own continuous station, not a playlist or a personalised stream.
 Together they make one permanently tunable network.
+
+All five also broadcast on [YouTube](https://www.youtube.com/@studayfm), each
+with an animated clay scene. Same music, same presenters, another way into the
+station. The video adds no separate playlist or AI production workload.
+See [how the simulcasts work](docs/youtube-simulcast.md).
 
 ## Voices in the machine
 
@@ -106,6 +113,7 @@ station facts, quiet observations and the occasional suspiciously unnecessary
 aside from a machine that enjoys its job.
 
 - [Listen live](https://studayfm.com)
+- [Watch the five YouTube simulcasts](docs/youtube-simulcast.md)
 - [Hear the one-minute station sampler](docs/audio/studayfm-one-minute.mp3)
 - [Meet the presenters](docs/PRESENTERS.md)
 - [See where the project is going](ROADMAP.md)
