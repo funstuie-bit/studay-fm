@@ -10,6 +10,7 @@ Start with the [project direction](../ROADMAP.md) and
 | Page | What it covers |
 |---|---|
 | [Current state](current-state.md) | What is live now, self-hosted model roles and what remains experimental |
+| [YouTube simulcasts](youtube-simulcast.md) | Five public broadcasts, clay animation, shared audio, independent recovery and remaining limits |
 | [Production flow](production-flow.md) | Full station diagram, approved media, atomic manifests and atomic public state |
 | [Model authority](model-authority.md) | Observation tools, owner-authorised actions, receipts and bounded repair |
 | [Operations agent](operations-agent.md) | Audit, Plan and Maintain modes, confirmation and blocked operations |

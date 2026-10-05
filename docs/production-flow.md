@@ -49,6 +49,12 @@ Studay FM follows a full schedule. StuLoFiDay, Yacht Zone, Tokyo Jazz and C'est
 Magnifistu use simpler flow rules and watched manifests. One failed dial should
 not require the other four to restart.
 
+Five [YouTube relays](youtube-simulcast.md) consume those same Icecast mounts.
+Each combines one station's audio with a pre-rendered clay loop and sends it over
+encrypted RTMPS. Video packets are copied, not rendered again. The relays do not
+select records, generate speech or own the station clock; a relay failure leaves
+the website and original audio stream running.
+
 ## From candidate to air
 
 Generated media moves through this chain:

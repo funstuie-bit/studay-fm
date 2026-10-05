@@ -29,6 +29,12 @@ The stream layer verifies:
 - per-station now-playing advances;
 - the playout service definition matches the intended station.
 
+The optional [YouTube simulcasts](youtube-simulcast.md) have independent media
+progress checks and transition alerts. Both audio and video must advance; a live
+PID or successful connection alone is not healthy. These checks establish relay
+transport progress, not viewer playback or automatic replacement of an ended
+YouTube broadcast. One relay can reconnect without restarting any station.
+
 An alive process is not enough. A Liquidsoap encoder can exist while its Icecast
 source is disconnected, and a public tunnel can fail while every local request
 is green.

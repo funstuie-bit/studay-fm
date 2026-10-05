@@ -28,6 +28,19 @@ Work should do at least one of these things:
 
 Complexity that does none of these should be deferred or removed.
 
+## Shipped: five YouTube simulcasts
+
+As of 4 October 2026, all five stations are live and Public on the
+[Studay FM YouTube channel](https://www.youtube.com/@studayfm). Each pairs its
+existing live audio with a reviewed clay animation; independent relay workers
+leave the original radio playout alone. A transport interruption and recovery
+have been tested without ending the affected broadcast.
+
+Next for this outlet: apply the reviewed channel branding, account for technical
+relay listeners in audience statistics, and improve recovery when YouTube ends
+a broadcast. Reconnecting an encoder is already implemented; creating a replacement
+broadcast is not. See [the simulcast guide](docs/youtube-simulcast.md).
+
 ## Near-term priorities
 
 1. Evaluate the new Signalman editorial sessions in bounded show canaries:
